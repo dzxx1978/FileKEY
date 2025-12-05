@@ -36,7 +36,7 @@
      ~~~
         filekey.exe file.dat bfa2dfbf5e3208ceebaf268e3bb8896e6dcbeb7af6d2c56d7f48c2fd849a3d1e
      ~~~
-  4. 执行时跟一个文件并在空格后跟一个包含key值的文件，程序将计算第一个文件的key值并与指定key文件中记录的值匹配，显示是否匹配到文件中第几行第几列的key值后后退出。  
+  4. 执行时跟一个文件并在空格后跟一个包含key值的文件，程序将计算第一个文件的key值并与指定key文件中记录的值匹配，显示是否匹配到文件中第几行第几列的key值后退出。  
      ~~~
         filekey.exe file.dat keys.txt
      ~~~
