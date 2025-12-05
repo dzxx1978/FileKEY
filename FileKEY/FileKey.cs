@@ -1,16 +1,16 @@
-﻿using System.Security.Cryptography;
+﻿using Microsoft.VisualBasic.FileIO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace FileKEY;
 
 public class FileKey
 {
+    private static bool isCrc32TableInitialized = false;
     private static uint[] Crc32Table = new uint[256];
-    private static Dictionary<string, string> fileTypes = new();
-
-    public FileKey()
+    private static void InitializeCrc32Table()
     {
-        if (fileTypes.Count == 0)
+        if (!isCrc32TableInitialized)
         {
             for (uint i = 0; i < 256; i++)
             {
@@ -21,24 +21,32 @@ public class FileKey
                 }
                 Crc32Table[i] = crc;
             }
-
-            fileTypes.Add("00000000000000000", "Iso(iso)");
-            fileTypes.Add("%PDF-", "PDF(pdf)");
-            fileTypes.Add("255216255224016JFIF", "JPEG(jpg)");
-            fileTypes.Add("137PNG", "PNG(png)");
-            fileTypes.Add("PK3410", "Office(xlsx,docx)");
-            fileTypes.Add("PK3420", "Zip(zip)");
-            fileTypes.Add("2082071722416117726225", "Office(xls,doc)");
-            fileTypes.Add("Rar!", "Rar(rar)");
-            fileTypes.Add("x218c", "Image(dmg)");
-            fileTypes.Add("MZ", "WindowsApp(exe,dll)");
-            fileTypes.Add("BSJB", "DebugDatabase(pdb)");
-            fileTypes.Add("KDMV", "VmwareDisk(vmdk)");
+            isCrc32TableInitialized = true;
         }
-
     }
 
-    public async Task<FileKeyInfo> GetFileKeyInfo(string filePath, string outPut, CancellationToken cancellationToken = default)
+    private static bool isFileTypesInitialized = false;
+    private static Dictionary<string, string> fileTypes = new();
+    private static void InitializeFileTypes()
+    {
+        if (!isFileTypesInitialized)
+        {
+            fileTypes.Add("0000000000000000", "Iso(iso)");//type:4552806260000000000
+            fileTypes.Add("255044462D312E", "PDF(pdf)");//type:255044462D312E37AA342030206F62
+            fileTypes.Add("FFD8FFE00104A464946", "JPEG(jpg)");//type:FFD8FFE00104A464946011001
+            fileTypes.Add("89504E47", "PNG(png)");//type:89504E47DA1AA000D49484452
+            fileTypes.Add("504B34A0", "Office(xlsx,docx)");//type:504B34A00000874EE24000
+            fileTypes.Add("504B3414", "Zip(zip)");         //type:504B341400080AA596D5B596D
+            fileTypes.Add("D0CF11E0A1B11AE1", "Office(xls,doc); WindowsInstaller(msi)");//type:D0CF11E0A1B11AE100000000
+            fileTypes.Add("52617221", "Rar(rar)");//type: 526172211A710F844A420C158
+            fileTypes.Add("78DA63", "Image(dmg)");//type:78DA63601854318FCFBFFFF1D10332
+            fileTypes.Add("4D5A", "App(exe,dll)");//type:4D5A90030004000FFFF00
+            fileTypes.Add("4B444D56", "VmwareDisk(vmdk)");//type:4B444D561000300000A0 type:4B444D5610003000007F0
+            isFileTypesInitialized = true;
+        }
+    }
+
+    public async Task<FileKeyInfo> GetFileKeyInfo(string filePath, string outPutControl, CancellationToken cancellationToken = default)
     {
         var key = new FileKeyInfo();
         key.Path = filePath;
@@ -50,30 +58,28 @@ public class FileKey
             key.Exists = false;
             return key;
         }
-
+        
         key.Name = fileInfo.Name;
         key.Length = fileInfo.Length;
         key.Time = fileInfo.LastWriteTime;
 
         try
         {
-
             //type
-            if (outPut.Substring(0, 1) == "1")
-                key.Type = await GetFileType(filePath, cancellationToken);
+            if (outPutControl.Substring(0, 1) == "1")
+                key.TypeName = await GetFileType(filePath, cancellationToken);
 
             //CRC
-            if (outPut.Substring(1, 1) == "1")
-                key.CRC = await GetFileCRC(filePath, cancellationToken);
+            if (outPutControl.Substring(1, 1) == "1")
+                key.Crc32Hash = await GetFileCRC(filePath, cancellationToken);
 
             //md5
-            if (outPut.Substring(2, 1) == "1")
-                key.MD5 = await GetFileMD5(filePath, cancellationToken);
+            if (outPutControl.Substring(2, 1) == "1")
+                key.Md5Hash = await GetFileMD5(filePath, cancellationToken);
 
             //sha
-            if (outPut.Substring(3, 1) == "1")
-                key.Sha256 = await GetFileSha256(filePath, cancellationToken);
-
+            if (outPutControl.Substring(3, 1) == "1")
+                key.Sha256Hash = await GetFileSha256(filePath, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -100,6 +106,8 @@ public class FileKey
 
     public async Task<uint> GetFileCRC(string filePath, CancellationToken cancellationToken = default)
     {
+        InitializeCrc32Table();
+
         uint crc = 0xFFFFFFFF;
         var buffer = new byte[8192];
 
@@ -121,9 +129,11 @@ public class FileKey
 
     }
 
-    private async Task<string> GetFileType(string filePath, CancellationToken cancellationToken = default)
+    public async Task<string> GetFileType(string filePath, CancellationToken cancellationToken = default)
     {
-        var buffer = new byte[1024];
+        InitializeFileTypes();
+
+        var buffer = new byte[16];
         using var fileStream = File.OpenRead(filePath);
         int bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length);
 
@@ -133,61 +143,19 @@ public class FileKey
         }
 
         var fileType = new StringBuilder();
+        var fileBytes = new StringBuilder();
 
-        if (buffer.SequenceEqual(Encoding.UTF8.GetPreamble()))
+        for (var i = 0; i < bytesRead; i++)
         {
-            fileType.Append($"UTF8(txt)");
-        }
-        else if (buffer.SequenceEqual(Encoding.Unicode.GetPreamble()))
-        {
-            fileType.Append($"Unicode(txt)");
-        }
-        else if (buffer.SequenceEqual(Encoding.BigEndianUnicode.GetPreamble()))
-        {
-            fileType.Append($"BigEndianUnicode(txt)");
-        }
-        else
-        {
-            var fileClass = new StringBuilder();
-            var ifBinary = false;
-            for (var i = 0; i < bytesRead; i++)
+            fileBytes.Append(buffer[i].ToString("X"));
+            if (fileTypes.ContainsKey(fileBytes.ToString()))
             {
-                var num = buffer[i];
-                if (num > 0 && num < 32 && num != 9 && num != 10 && num != 13)
-                {
-                    ifBinary = true;
-                }
+                fileType.Append($"{fileTypes[fileBytes.ToString()]}; ");
+            }
+        }
 
-                if (i > 15 || ifBinary)
-                {
-                    if (ifBinary) break;
-                }
-                else
-                {
-                    var ch = Convert.ToChar(num);
-                    if ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()-=_+[]{}|;':,./<>?\\\"".Contains(ch))
-                    {
-                        fileClass.Append(ch);
-                    }
-                    else
-                    {
-                        fileClass.Append(num);
-                    }
-                    if (fileTypes.ContainsKey(fileClass.ToString()))
-                    {
-                        fileType.Append($"{fileTypes[fileClass.ToString()]}; ");
-                    }
-                }
-            }
-            if (ifBinary)
-            {
-                fileType.Append(fileClass);
-            }
-            else
-            {
-                fileType.Append("Text(txt);");
-            }
-        }
+        if (fileType.Length==0)
+            fileType.Append(fileBytes);
 
         return fileType.ToString();
 

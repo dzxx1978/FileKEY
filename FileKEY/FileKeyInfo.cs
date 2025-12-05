@@ -25,7 +25,7 @@ public class FileKeyInfo
     /// <summary>
     /// 文件类型
     /// </summary>
-    public string Type { get; set; } = "";
+    public string TypeName { get; set; } = "";
 
     /// <summary>
     /// 创建时间
@@ -40,47 +40,30 @@ public class FileKeyInfo
     /// <summary>
     /// crc校验值
     /// </summary>
-    public uint CRC { get; set; }
+    public uint Crc32Hash { get; set; }
 
     /// <summary>
     /// md5校验值
     /// </summary>
-    public string MD5 { get; set; } = "";
+    public string Md5Hash { get; set; } = "";
 
     /// <summary>
     /// sha256校验值
     /// </summary>
-    public string Sha256 { get; set; } = "";
+    public string Sha256Hash { get; set; } = "";
 
-    public decimal GB
-    {
-        get
-        {
-            return MB / 1024;
-        }
-    }
-    public decimal MB
-    {
-        get
-        {
-            return KB / 1024;
-        }
-    }
-    public decimal KB
-    {
-        get
-        {
-            return Length / 1024;
-        }
-    }
+    public decimal GB => MB / 1024;
 
-    public string Size
-    {
-        get {
+    public decimal MB => KB / 1024;
 
-            return GB > 1 ? $"{Math.Round(GB, 2)}G" : MB > 1 ? $"{Math.Round(MB, 2)}M" : $"{Math.Round(KB, 2)}K";
-        
-        }
-    
-    }
+    public decimal KB => Length / 1024;
+
+    public string DisplaySize => GB > 1 ? $"{Math.Round(GB, 2)}G" : MB > 1 ? $"{Math.Round(MB, 2)}M" : $"{Math.Round(KB, 2)}K";
+
+    public string Crc32Normalized => Crc32Hash.ToString("X8");
+
+    public string Md5Normalized => Md5Hash.Replace("-", "").ToLower();
+
+    public string Sha256Normalized => Sha256Hash.Replace("-", "").ToLower();
+
 }

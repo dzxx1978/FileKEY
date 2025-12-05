@@ -1,6 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
-using System.Transactions;
 
 namespace FileKEY;
 
@@ -136,7 +135,8 @@ public static class Message
         {
             try
             {
-                Write(message.Substring(i, 1), left, top);
+                if (!Console.IsOutputRedirected)
+                    Write(message.Substring(i, 1), left, top);
 
                 i++;
                 if (i >= message.Length) i = 0;
@@ -146,6 +146,7 @@ public static class Message
             catch { }
         }
 
+        Write(message.Substring(0, 1), left, top);
     }
 
     /// <summary>

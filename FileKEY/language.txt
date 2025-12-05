@@ -8,6 +8,7 @@
 NoKeyTheLengthIs=没有一个Key的长度是
 显示完毕，按回车继续下一个。=显示完毕，按回车继续下一个。
 没有这个文件！=没有这个文件！
+处理完毕=OK
 END=结束
-same-=相同-
-different-=不相同-
+matched-=已匹配-
+miss-=不相同-
