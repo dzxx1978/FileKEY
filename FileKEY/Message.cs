@@ -404,11 +404,10 @@ public static class Message
     /// </summary>
     /// <param name="title">字符串名称</param>
     /// <returns>输入字符串</returns>
-    public static string ReadString(string title)
+    public static string ReadString(string title, bool enter = false)
     {
-        doPrint(false, $"请输入{title}：");
-        var UserName = Console.ReadLine() ?? "";
-        return UserName;
+        doPrint(enter, $"{title}:");
+        return Console.ReadLine() ?? "";
     }
 
 

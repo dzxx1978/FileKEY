@@ -1,4 +1,5 @@
 ﻿using FileKEY;
+using System.Reflection;
 
 var fileOrDirectoryPath = "";
 var comparisonKey = "";
@@ -12,8 +13,6 @@ var isDetailedInfoShown = true;
 var isHelpShownAndExit = false;
 
 var isPathFromArgs = false;
-
-var fileKey = new FileKey();
 
 try
 {
@@ -30,7 +29,7 @@ catch (Exception ex)
 if (isHelpShownAndExit)
 {
     Message.WriteLine("https://github.com/dzxx1978/FileKEY");
-    Message.WriteLine("FileKEY 1.0 by zxx 2025");
+    Message.WriteLine($"FileKEY {Assembly.GetExecutingAssembly().GetName().Version?.ToString()} by zxx 2025");
     Message.WriteLine("FileKEY [path] [key] [-0tcms]");
     Message.WriteLine(" -0 small print");
     Message.WriteLine(" -t only type");
@@ -47,6 +46,8 @@ if (isDetailedInfoShown)
     if (!string.IsNullOrEmpty(comparisonKey))
         Message.WriteLine($"argskey:{comparisonKey}");
 }
+
+var fileKey = new FileKey(outTypeOption == 1, outCrcOption == 1, outMd5Option == 1, outSha256Option == 1);
 
 await GanHuoer();
 return;
@@ -71,6 +72,8 @@ async Task GanHuoer()
             Message.WarningLine(ex.Message, false);
             continue;
         }
+
+        getComparisonKey();
 
         foreach (var file in filePaths)
         {
@@ -120,7 +123,7 @@ async Task<FileKeyInfo> readFileInfo(string file)
         task1 = Message.WriteLoop(">*", cancellationToken: tk.Token);
     }
 
-    var key = await fileKey.GetFileKeyInfo(file, $"{outTypeOption}{outCrcOption}{outMd5Option}{outSha256Option}", tk.Token);
+    var key = await fileKey.GetFileKeyInfo(file, tk.Token);
 
     tk.Cancel();
     await task1;
@@ -235,8 +238,8 @@ bool compareChecksums(FileKeyInfo fileKeyInfo)
 
 }
 
-List<string>? getPaths() {
-
+List<string>? getPaths()
+{
 
     if (!isPathFromArgs)
         fileOrDirectoryPath = Message.ReadPath("请输入文件路径", fileOrDirectoryPath);
@@ -261,6 +264,14 @@ List<string>? getPaths() {
     }
 
     return resultFilePaths;
+}
+
+void getComparisonKey()
+{
+
+    if (!isPathFromArgs)
+        comparisonKey = Message.ReadString("请输入验证Key值或存储Key值的文件路径", true);
+
 }
 
 bool parseCommandLineArgs() {
