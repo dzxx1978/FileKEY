@@ -5,7 +5,6 @@ namespace FileKEY
 {
     public static class Language
     {
-
         private static Dictionary<MessageKey, string> messages = new();
 
         public static void Initialize(string language = "")
@@ -113,6 +112,22 @@ namespace FileKEY
 
             if (formatArgs is not null)
                 msg = string.Format(msg, formatArgs);
+
+            return msg;
+        }
+
+        public static string GetHelpShown()
+        {
+            var msg = @$"
+https://github.com/dzxx1978/FileKEY
+FileKEY {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString()} by zxx 2025
+FileKEY [path] [key] [-0tcms]
+ -0 small print
+ -t only type
+ -c only crc
+ -m only md5
+ -s only sha256
+";
 
             return msg;
         }

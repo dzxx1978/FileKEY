@@ -1,12 +1,14 @@
 ﻿
+using static FileKEY.Language;
+
 namespace FileKEY
 {
     public static class AppOption
     {
-        private static int _outTypeOption = 1;
-        private static int _outCrcOption = 1;
-        private static int _outMd5Option = 1;
-        private static int _outSha256Option = 1;
+        private static int _outTypeOption;
+        private static int _outCrcOption;
+        private static int _outMd5Option;
+        private static int _outSha256Option;
 
         private static int _outMaxOption { get => _outTypeOption == 2 || _outCrcOption == 2 || _outMd5Option == 2 || _outSha256Option == 2 ? 1 : 0; }
 
@@ -77,17 +79,120 @@ namespace FileKEY
         /// <summary>
         /// 是否显示详细信息
         /// </summary>
-        public static bool IsDetailedInfoShown { get; set; } = true;
+        public static bool IsDetailedInfoShown { get; set; }
 
         /// <summary>
         /// 是否显示帮助并退出
         /// </summary>
-        public static bool IsHelpShownAndExit { get; set; } = false;
+        public static bool IsHelpShownAndExit { get; set; }
 
         /// <summary>
         /// 是否是从命令行参数中获取的路径
         /// </summary>
-        public static bool IsPathFromArgs { get; set; } = false;
+        public static bool IsPathFromArgs { get; set; }
+
+        static AppOption()
+        {
+            initialize();
+        }
+
+        private static void initialize()
+        {
+            _outTypeOption = 1;
+            _outCrcOption = 1;
+            _outMd5Option = 1;
+            _outSha256Option = 1;
+
+            FileOrDirectoryPath = "";
+            ComparisonKey = "";
+
+            IsDetailedInfoShown = true; 
+            IsHelpShownAndExit = false;
+            IsPathFromArgs = false;
+        }
+
+        public static void parseCommandLineArgs(string[] arr)
+        {
+            initialize();
+
+            if (arr.Length > 0)
+            {
+                for (var i = 0; i < arr.Length; i++)
+                {
+                    if (arr[i].Substring(0, 1) == "-")
+                    {
+                        var parameter = arr[i].Substring(1);
+
+                        if (parameter == "-Language")
+                        {
+                            i++;
+                            if (i < arr.Length)
+                            {
+                                Initialize(arr[i]);
+                            }
+                            else
+                            {
+                                throw new Exception(GetMessage(MessageKey.ParameterLanguageUsageErrorMissingLanguageCode));
+                            }
+                            continue;
+                        }
+
+                        parameter = parameter.ToUpper();
+                        if (parameter.Contains("V"))
+                        {
+                            AppOption.IsHelpShownAndExit = true;
+                            return;
+                        }
+                        if (parameter.Contains("T"))
+                        {
+                            parameter = parameter.Replace("T", "");
+                            AppOption.OutTypeOption = true;
+                        }
+                        if (parameter.Contains("C"))
+                        {
+                            parameter = parameter.Replace("C", "");
+                            AppOption.OutCrcOption = true;
+                        }
+                        if (parameter.Contains("M"))
+                        {
+                            parameter = parameter.Replace("M", "");
+                            AppOption.OutMd5Option = true;
+                        }
+                        if (parameter.Contains("S"))
+                        {
+                            parameter = parameter.Replace("S", "");
+                            AppOption.OutSha256Option = true;
+                        }
+                        if (parameter.Contains("0"))
+                        {
+                            parameter = parameter.Replace("0", "");
+                            AppOption.IsDetailedInfoShown = false;
+                        }
+
+                        if (!string.IsNullOrEmpty(parameter))
+                        {
+                            throw new Exception(GetMessage(MessageKey.UnrecognizedParameters, parameter));
+                        }
+                    }
+                    else if (string.IsNullOrEmpty(AppOption.FileOrDirectoryPath))
+                    {
+                        AppOption.IsPathFromArgs = true;
+                        AppOption.FileOrDirectoryPath = arr[i];
+                    }
+                    else if (string.IsNullOrEmpty(AppOption.ComparisonKey))
+                    {
+                        AppOption.ComparisonKey = arr[i];
+                    }
+                    else
+                    {
+                        throw new Exception(GetMessage(MessageKey.TooManyParameters, arr[i]));
+                    }
+                }
+
+            }
+
+            return;
+        }
 
     }
 }
