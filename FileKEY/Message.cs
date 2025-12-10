@@ -7,11 +7,8 @@ public static class Message
 {
     private static StringBuilder saveString = new();
 
-    private static Dictionary<string,string> language = new();
     private static void doPrint(bool enter, string message = "")
     {
-
-        message = translation(message);
 
         if (enter)
         {
@@ -24,35 +21,6 @@ public static class Message
 
     }
 
-    private static string translation(string message)
-    {
-        foreach (var item in language) { 
-        
-            message = message.Replace(item.Key, item.Value);
-        
-        }
-
-        return message;
-    }
-
-    public static void LoadLanguage()
-    {
-        if (File.Exists("language.txt") == false) return;
-
-        using (StreamReader reader = new StreamReader("language.txt"))
-        {
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                var item = line.Split('=');
-                if (item.Length == 2)
-                {
-                    if (item[0].Trim() != item[1].Trim())
-                        language.Add(item[0].Trim(), item[1].Trim());
-                }
-            }
-        }
-    }
 
     /// <summary>
     /// 清屏（并显示已存储文本）
@@ -406,7 +374,7 @@ public static class Message
     /// <returns>输入字符串</returns>
     public static string ReadString(string title, bool enter = false)
     {
-        doPrint(enter, $"{title}:");
+        doPrint(enter, title);
         return Console.ReadLine() ?? "";
     }
 
@@ -509,13 +477,8 @@ public static class Message
         {
             if (string.IsNullOrEmpty(defaultPath) == false)
             {
-                title += $"，使用默认输入({defaultPath})请直接回车：";
+                title = Language.GetMessage(Language.MessageKey.PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly, defaultPath);
             }
-            else
-            {
-                title += "：";
-            }
-            title = title.Replace("：，", "，").Replace(":，", "，").Replace("：：", "：").Replace(":：", "：").Trim();
 
             doPrint(true, title);
 
@@ -530,14 +493,6 @@ public static class Message
                     Message.Write(importString, 0, top - 1);
                     SetPos(left, top);
 
-                }
-                else
-                {
-                    var menuNum = ShowSelectMenu(1, ["没有接收到任何文件夹", "重试", "退出"]);
-                    if (menuNum == 1)
-                    {
-                        continue;
-                    }
                 }
             }
             else

@@ -1,32 +1,20 @@
 ﻿using FileKEY;
 using System.Reflection;
-
-var fileOrDirectoryPath = "";
-var comparisonKey = "";
-
-var outTypeOption = 1;
-var outCrcOption = 1;
-var outMd5Option = 1;
-var outSha256Option = 1;
-
-var isDetailedInfoShown = true;
-var isHelpShownAndExit = false;
-
-var isPathFromArgs = false;
+using static FileKEY.Language;
 
 try
 {
-    Message.LoadLanguage();
+    Initialize();
     parseCommandLineArgs();
 }
 catch (Exception ex)
 {
-    isHelpShownAndExit = true;
-    isDetailedInfoShown = true;
+    AppOption.IsHelpShownAndExit = true;
+    AppOption.IsDetailedInfoShown = true;
     Message.WarningLine(ex.Message, false);
 }
 
-if (isHelpShownAndExit)
+if (AppOption.IsHelpShownAndExit)
 {
     Message.WriteLine("https://github.com/dzxx1978/FileKEY");
     Message.WriteLine($"FileKEY {Assembly.GetExecutingAssembly().GetName().Version?.ToString()} by zxx 2025");
@@ -39,15 +27,15 @@ if (isHelpShownAndExit)
     return;
 }
 
-if (isDetailedInfoShown)
+if (AppOption.IsDetailedInfoShown)
 {
-    if (!string.IsNullOrEmpty(fileOrDirectoryPath))
-        Message.WriteLine($"argspath:{fileOrDirectoryPath}");
-    if (!string.IsNullOrEmpty(comparisonKey))
-        Message.WriteLine($"argskey:{comparisonKey}");
+    if (!string.IsNullOrEmpty(AppOption.FileOrDirectoryPath))
+        Message.WriteLine($"argspath:{AppOption.FileOrDirectoryPath}");
+    if (!string.IsNullOrEmpty(AppOption.ComparisonKey))
+        Message.WriteLine($"argskey:{AppOption.ComparisonKey}");
 }
 
-var fileKey = new FileKey(outTypeOption == 1, outCrcOption == 1, outMd5Option == 1, outSha256Option == 1);
+var fileKey = new FileKey(AppOption.OutTypeOption, AppOption.OutCrcOption, AppOption.OutMd5Option, AppOption.OutSha256Option);
 
 await GanHuoer();
 return;
@@ -94,16 +82,16 @@ async Task GanHuoer()
     }
     while (isContinue());
 
-    if (isDetailedInfoShown)
-        Message.WriteLine("END");
+    if (AppOption.IsDetailedInfoShown)
+        Message.WriteLine(GetMessage(MessageKey.End));
 
 }
 
 bool isContinue() {
 
-    if (!isPathFromArgs && !Console.IsOutputRedirected)
+    if (!AppOption.IsPathFromArgs && !Console.IsOutputRedirected)
     {
-        Message.Attention("显示完毕，按回车继续下一个。");
+        Message.Attention(GetMessage(MessageKey.DisplayCompletedPressEnterToContinue));
         Message.Wait("", ConsoleKey.Enter);
         return true;
     }
@@ -117,9 +105,9 @@ async Task<FileKeyInfo> readFileInfo(string file)
     Task task1 = Task.Run(() => { });
     var tk = new CancellationTokenSource();
 
-    if (isDetailedInfoShown)
+    if (AppOption.IsDetailedInfoShown)
     {
-        Message.Write("稍等 >>");
+        Message.Write(GetMessage(MessageKey.Wait));
         task1 = Message.WriteLoop(">*", cancellationToken: tk.Token);
     }
 
@@ -128,27 +116,31 @@ async Task<FileKeyInfo> readFileInfo(string file)
     tk.Cancel();
     await task1;
 
-    if(isDetailedInfoShown)
-        Message.WriteLine($" 处理完毕");
+    if(AppOption.IsDetailedInfoShown)
+        Message.WriteLine(GetMessage(MessageKey.ProcessCompleted));
 
     return key;
 }
 
-void displayFileInfoDetails(FileKeyInfo fileKeyInfo) {
+void displayFileInfoDetails(FileKeyInfo fileKeyInfo)
+{
 
-    if (isDetailedInfoShown)
+    if (AppOption.IsDetailedInfoShown)
     {
         Message.WriteLine($"name:{fileKeyInfo.Name}");
         Message.WriteLine($"time:{fileKeyInfo.Time.ToString("yyyy-MM-dd HH:mm:ss")}");
         Message.WriteLine($"size:{fileKeyInfo.DisplaySize}({fileKeyInfo.Length}B)");
+    }
 
-        if (outTypeOption == 1)
+    if (AppOption.IsDetailedInfoShown || string.IsNullOrEmpty(AppOption.ComparisonKey))
+    {
+        if (AppOption.OutTypeOption)
             Message.WriteLine($"type:{fileKeyInfo.TypeName}");
-        if (outCrcOption == 1)
+        if (AppOption.OutCrcOption)
             Message.WriteLine($"crc:{fileKeyInfo.Crc32Normalized}");
-        if (outMd5Option == 1)
+        if (AppOption.OutMd5Option)
             Message.WriteLine($"md5:{fileKeyInfo.Md5Normalized}");
-        if (outSha256Option == 1)
+        if (AppOption.OutSha256Option)
             Message.WriteLine($"sha256:{fileKeyInfo.Sha256Normalized}");
     }
 
@@ -157,14 +149,14 @@ void displayFileInfoDetails(FileKeyInfo fileKeyInfo) {
 bool compareChecksums(FileKeyInfo fileKeyInfo)
 {
 
-    if (string.IsNullOrEmpty(comparisonKey) == false)
+    if (string.IsNullOrEmpty(AppOption.ComparisonKey) == false)
     {
         var comparisonKeyLines = new List<string>();
         var isComparisonKeyFile = false;
-        if (File.Exists(comparisonKey))
+        if (File.Exists(AppOption.ComparisonKey))
         {
             isComparisonKeyFile = true;
-            using (StreamReader reader = new StreamReader(comparisonKey))
+            using (StreamReader reader = new StreamReader(AppOption.ComparisonKey))
             {
                 string? line;
                 while ((line = reader.ReadLine()) != null)
@@ -175,13 +167,14 @@ bool compareChecksums(FileKeyInfo fileKeyInfo)
         }
         else
         {
-            comparisonKeyLines.Add(comparisonKey);
+            comparisonKeyLines.Add(AppOption.ComparisonKey);
         }
 
         var crc = fileKeyInfo.Crc32Normalized;
         var md5 = fileKeyInfo.Md5Normalized;
         var sha256 = fileKeyInfo.Sha256Normalized;
 
+        var matchedHash = "";
         var matchedHashType = "";
         var matchedRowIndex = 0;
         var matchedColumnIndex = 0;
@@ -191,18 +184,21 @@ bool compareChecksums(FileKeyInfo fileKeyInfo)
             matchedRowIndex++;
             matchedColumnIndex = 0;
 
-            if (outCrcOption == 1 && (isComparisonKeyFile && lineKey.Contains(crc) || lineKey == crc))
+            if (AppOption.OutCrcOption && (isComparisonKeyFile && lineKey.Contains(crc) || lineKey == crc))
             {
+                matchedHash = crc;
                 matchedHashType = "CRC";
                 matchedColumnIndex = lineKey.IndexOf(crc) + 1;
             }
-            else if (outMd5Option == 1 && (isComparisonKeyFile && lineKey.Contains(md5) || lineKey == md5))
+            else if (AppOption.OutMd5Option && (isComparisonKeyFile && lineKey.Contains(md5) || lineKey == md5))
             {
+                matchedHash = md5;
                 matchedHashType = "MD5";
                 matchedColumnIndex = lineKey.IndexOf(md5) + 1;
             }
-            else if (outSha256Option == 1 && (isComparisonKeyFile && lineKey.Contains(sha256) || lineKey == sha256))
+            else if (AppOption.OutSha256Option && (isComparisonKeyFile && lineKey.Contains(sha256) || lineKey == sha256))
             {
+                matchedHash = sha256;
                 matchedHashType = "sha256";
                 matchedColumnIndex = lineKey.IndexOf(sha256) + 1;
             }
@@ -211,26 +207,26 @@ bool compareChecksums(FileKeyInfo fileKeyInfo)
             {
                 if (isComparisonKeyFile)
                 {
-                    Message.WriteLine($"matched-{matchedHashType}-{matchedRowIndex}.{matchedColumnIndex}", color: ConsoleColor.Green);
+                    Message.WriteLine($"{GetMessage(MessageKey.Matched, matchedHashType, matchedHash)}-{matchedRowIndex}.{matchedColumnIndex}", color: ConsoleColor.Green);
                 }
                 else
                 {
-                    Message.WriteLine($"matched-{matchedHashType}", color: ConsoleColor.Green);
+                    Message.WriteLine(GetMessage(MessageKey.Matched, matchedHashType, matchedHash), color: ConsoleColor.Green);
                 }
                 return true;
             }
         }
 
-        var outKey = outCrcOption == 1 && outMd5Option == 0 && outSha256Option == 0 ? crc
-            : outCrcOption == 0 && outMd5Option == 1 && outSha256Option == 0 ? md5
-            : outCrcOption == 0 && outMd5Option == 0 && outSha256Option == 1 ? sha256
-            : !isComparisonKeyFile && outCrcOption == 1 && crc.Length == comparisonKey.Length ? crc
-            : !isComparisonKeyFile && outMd5Option == 1 && md5.Length == comparisonKey.Length ? md5
-            : !isComparisonKeyFile && outSha256Option == 1 && sha256.Length == comparisonKey.Length ? sha256
-            : isComparisonKeyFile ? $"NoKeyInFile({Path.GetFileName(comparisonKey)})"
-            : $"NoKeyTheLengthIs({comparisonKey.Length})";
+        var outKey = AppOption.OnlyOutHashOption(nameof(AppOption.OutCrcOption)) ? crc
+            : AppOption.OnlyOutHashOption(nameof(AppOption.OutMd5Option)) ? md5
+            : AppOption.OnlyOutHashOption(nameof(AppOption.OutSha256Option)) ? sha256
+            : !isComparisonKeyFile && AppOption.OutCrcOption && crc.Length == AppOption.ComparisonKey.Length ? crc
+            : !isComparisonKeyFile && AppOption.OutMd5Option && md5.Length == AppOption.ComparisonKey.Length ? md5
+            : !isComparisonKeyFile && AppOption.OutSha256Option && sha256.Length == AppOption.ComparisonKey.Length ? sha256
+            : isComparisonKeyFile ? GetMessage(MessageKey.NoKeyInFile, Path.GetFileName(AppOption.ComparisonKey))
+            : GetMessage(MessageKey.NoKeyTheLengthIs, AppOption.ComparisonKey.Length);
 
-        Message.WarningLine($"miss-{outKey}", false);
+        Message.WarningLine(GetMessage(MessageKey.Miss, outKey), false);
 
     }
 
@@ -241,26 +237,26 @@ bool compareChecksums(FileKeyInfo fileKeyInfo)
 List<string>? getPaths()
 {
 
-    if (!isPathFromArgs)
-        fileOrDirectoryPath = Message.ReadPath("请输入文件路径", fileOrDirectoryPath);
+    if (!AppOption.IsPathFromArgs)
+        AppOption.FileOrDirectoryPath = Message.ReadPath(GetMessage(MessageKey.PleaseEnterTheFilePath), AppOption.FileOrDirectoryPath);
 
-    if (string.IsNullOrEmpty(fileOrDirectoryPath) || fileOrDirectoryPath.ToLower() == "exit")
+    if (string.IsNullOrEmpty(AppOption.FileOrDirectoryPath) || AppOption.FileOrDirectoryPath.ToLower() == "exit")
     {
         return null;
     }
 
     var resultFilePaths = new List<string>();
-    if (Directory.Exists(fileOrDirectoryPath))
+    if (Directory.Exists(AppOption.FileOrDirectoryPath))
     {
-        resultFilePaths = Directory.GetFiles(fileOrDirectoryPath).ToList();
+        resultFilePaths = Directory.GetFiles(AppOption.FileOrDirectoryPath).ToList();
     }
-    else if (File.Exists(fileOrDirectoryPath))
+    else if (File.Exists(AppOption.FileOrDirectoryPath))
     {
-        resultFilePaths.Add(fileOrDirectoryPath);
+        resultFilePaths.Add(AppOption.FileOrDirectoryPath);
     }
     else
     {
-        throw new Exception($"输入的文件路径{fileOrDirectoryPath}不存在");
+        throw new Exception(GetMessage(MessageKey.TheInputFilePathDoesNotExist, AppOption.FileOrDirectoryPath));
     }
 
     return resultFilePaths;
@@ -269,12 +265,12 @@ List<string>? getPaths()
 void getComparisonKey()
 {
 
-    if (!isPathFromArgs)
-        comparisonKey = Message.ReadString("请输入验证Key值或存储Key值的文件路径", true);
+    if (!AppOption.IsPathFromArgs)
+        AppOption.ComparisonKey = Message.ReadString(GetMessage(MessageKey.PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored), true);
 
 }
 
-bool parseCommandLineArgs() {
+void parseCommandLineArgs() {
 
     var arr = args.ToArray();
     if (arr.Length > 0)
@@ -283,69 +279,75 @@ bool parseCommandLineArgs() {
         {
             if (arr[i].Substring(0, 1) == "-")
             {
-                var parameter = arr[i].Substring(1).ToUpper();
+                var parameter = arr[i].Substring(1);
 
+                if (parameter == "-Language")
+                {
+                    i++;
+                    if (i < arr.Length)
+                    {
+                        Initialize(arr[i]);
+                    }
+                    else
+                    {
+                        throw new Exception(GetMessage(MessageKey.ParameterLanguageUsageErrorMissingLanguageCode));
+                    }
+                    continue;
+                }
+
+                parameter = parameter.ToUpper();
                 if (parameter.Contains("V"))
                 {
-                    isHelpShownAndExit = true;
-                    return true;
+                    AppOption.IsHelpShownAndExit = true;
+                    return;
                 }
                 if (parameter.Contains("T"))
                 {
                     parameter = parameter.Replace("T", "");
-                    outTypeOption = 2;
+                    AppOption.OutTypeOption = true;
                 }
                 if (parameter.Contains("C"))
                 {
                     parameter = parameter.Replace("C", "");
-                    outCrcOption = 2;
+                    AppOption.OutCrcOption = true;
                 }
                 if (parameter.Contains("M"))
                 {
                     parameter = parameter.Replace("M", "");
-                    outMd5Option = 2;
+                    AppOption.OutMd5Option = true;
                 }
                 if (parameter.Contains("S"))
                 {
                     parameter = parameter.Replace("S", "");
-                    outSha256Option = 2;
+                    AppOption.OutSha256Option = true;
                 }
                 if (parameter.Contains("0"))
                 {
                     parameter = parameter.Replace("0", "");
-                    isDetailedInfoShown = false;
+                    AppOption.IsDetailedInfoShown = false;
                 }
 
                 if (!string.IsNullOrEmpty(parameter))
                 {
-                    throw new Exception($"无法识别的参数：-{parameter}");
+                    throw new Exception(GetMessage(MessageKey.UnrecognizedParameters, parameter));
                 }
             }
-            else if (string.IsNullOrEmpty(fileOrDirectoryPath))
+            else if (string.IsNullOrEmpty(AppOption.FileOrDirectoryPath))
             {
-                isPathFromArgs = true;
-                fileOrDirectoryPath = arr[i];
+                AppOption.IsPathFromArgs = true;
+                AppOption.FileOrDirectoryPath = arr[i];
             }
-            else if (string.IsNullOrEmpty(comparisonKey))
+            else if (string.IsNullOrEmpty(AppOption.ComparisonKey))
             {
-                comparisonKey = arr[i];
+                AppOption.ComparisonKey = arr[i];
             }
             else
             {
-                throw new Exception($"参数过多：{arr[i]}");
+                throw new Exception(GetMessage(MessageKey.TooManyParameters, arr[i]));
             }
         }
 
-        if (outTypeOption == 2 || outCrcOption == 2 || outMd5Option == 2 || outSha256Option == 2)
-        {
-            outTypeOption--;
-            outCrcOption--;
-            outMd5Option--;
-            outSha256Option--;
-        }
-
-        return true;
     }
      
-    return false;
+    return;
 }

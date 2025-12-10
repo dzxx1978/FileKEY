@@ -69,7 +69,7 @@ public class FileKey
         var fileInfo = new FileInfo(filePath);
         if (fileInfo.Exists == false)
         {
-            key.ErrMessage = "没有这个文件！";
+            key.ErrMessage = Language.GetMessage(Language.MessageKey.ThereIsNoSuchFile);
             key.Exists = false;
             return key;
         }
