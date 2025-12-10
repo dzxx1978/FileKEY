@@ -52,6 +52,7 @@ namespace FileKEY
             ThereIsNoSuchFile,
             ProcessCompleted,
             Matched,
+            MatchedInKeysFile,
             Miss,
             NoKeyTheLengthIs,
             NoKeyInFile,
@@ -73,6 +74,7 @@ namespace FileKEY
             messages.Add(MessageKey.ThereIsNoSuchFile, "There is no such file!");
             messages.Add(MessageKey.ProcessCompleted, " Process completed");
             messages.Add(MessageKey.Matched, "matched-{0}-{1}");
+            messages.Add(MessageKey.MatchedInKeysFile, "matched-{0}-{1}-{2}.{3}");
             messages.Add(MessageKey.Miss, "miss-{0}");
 
             messages.Add(MessageKey.NoKeyTheLengthIs, "NoKeyTheLengthIs({0})");
@@ -97,6 +99,7 @@ namespace FileKEY
             messages.Add(MessageKey.ThereIsNoSuchFile, "没有这个文件！");
             messages.Add(MessageKey.ProcessCompleted, " 处理完毕");
             messages.Add(MessageKey.Matched, "已匹配-{0}-{1}");
+            messages.Add(MessageKey.MatchedInKeysFile, "已匹配-{0}-{1}-{2}.{3}");
             messages.Add(MessageKey.Miss, "不相同-{0}");
 
             messages.Add(MessageKey.NoKeyTheLengthIs, "没有Hash的长度是（{0}）");
@@ -110,7 +113,7 @@ namespace FileKEY
         {
             var msg = messages[message];
 
-            if (formatArgs is not null)
+            if (formatArgs is not null && formatArgs.Length > 0)
                 msg = string.Format(msg, formatArgs);
 
             return msg;

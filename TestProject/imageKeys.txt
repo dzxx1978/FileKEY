@@ -1,0 +1,18 @@
+argspath:TestFile
+稍等 >>> 处理完毕
+name:image-cat.png
+time:2025-12-10 18:03:17
+size:813K(833063B)
+type:PNG(png); 
+crc:27E9D872
+md5:d9ca43935c9663dccecf8c0951cf1ec2
+sha256:de566fbbf3033a30bb72cfd068b932d335d04b56212c78bd8fd87a7c8804819f
+稍等 >>> 处理完毕
+name:image-dog.jpg
+time:2025-12-10 18:10:20
+size:258K(264904B)
+type:JPEG(jpg); 
+crc:344B4A46
+md5:a336c452681fd7405b259d6131fffd02
+sha256:4a13733b1f6b9e0a16a58aef2fe54db59154eb335da590ef1894eac8c1e16628
+*结束*

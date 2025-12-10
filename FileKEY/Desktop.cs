@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using static FileKEY.Language;
+﻿using static FileKEY.Language;
 
 namespace FileKEY
 {
@@ -195,7 +194,7 @@ namespace FileKEY
                     {
                         if (isComparisonKeyFile)
                         {
-                            Message.WriteLine($"{GetMessage(MessageKey.Matched, matchedHashType, matchedHash)}-{matchedRowIndex}.{matchedColumnIndex}", color: ConsoleColor.Green);
+                            Message.WriteLine(GetMessage(MessageKey.MatchedInKeysFile, matchedHashType, matchedHash, matchedRowIndex, matchedColumnIndex), color: ConsoleColor.Green);
                         }
                         else
                         {
