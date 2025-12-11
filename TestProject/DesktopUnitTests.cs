@@ -16,18 +16,6 @@ namespace TestProject
         StringWriter writer;
         public DesktopUnitTests()
         {
-            for(var i = 0; i < 10; i++)
-            {
-                if (File.Exists(Path.Combine("TestFile", "image-cat.png")))
-                {
-                    break;
-                }
-
-                Thread.Sleep(200);
-            }
-
-            Language.Initialize();
-
             writer = new StringWriter();
             Console.SetOut(writer);
         }
