@@ -2,7 +2,6 @@
 
 try
 {
-    Language.Initialize();
     AppOption.parseCommandLineArgs(args.ToArray());
 }
 catch (Exception ex)

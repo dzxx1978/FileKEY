@@ -1,4 +1,5 @@
 using FileKEY;
+using System.Text;
 
 namespace TestProject
 {
@@ -15,6 +16,16 @@ namespace TestProject
         StringWriter writer;
         public DesktopUnitTests()
         {
+            for(var i = 0; i < 10; i++)
+            {
+                if (File.Exists(Path.Combine("TestFile", "image-cat.png")))
+                {
+                    break;
+                }
+
+                Thread.Sleep(200);
+            }
+
             Language.Initialize();
 
             writer = new StringWriter();
@@ -42,6 +53,171 @@ namespace TestProject
             var output = Language.GetHelpShown();
 
             Assert.Equal(writer.ToString(), output);
+
+        }
+
+        [Fact]
+        public void LoadTestLanguage()
+        {
+
+            var args = new List<string>
+            {
+                "--Language",
+                "test"
+            };
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            Assert.Equal("*end*", Language.GetMessage(Language.MessageKey.End));
+
+        }
+
+        [Fact]
+        public async Task InFile_t()
+        {
+
+            var args = new List<string>
+            {
+                Path.Combine("TestFile", "image-cat.png"),
+                "-t"
+            };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.Contains(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.Contains(imageCatFileTypeValue, output);
+            Assert.DoesNotContain(imageCatFileCrcKey, output);
+            Assert.DoesNotContain(imageCatFileMd5Key, output);
+            Assert.DoesNotContain(imageCatFileSha256Key, output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.End), output);
+
+        }
+
+        [Fact]
+        public async Task InFile_c()
+        {
+
+            var args = new List<string>
+            {
+                Path.Combine("TestFile", "image-cat.png"),
+                "-c"
+            };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.Contains(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.DoesNotContain(imageCatFileTypeValue, output);
+            Assert.Contains(imageCatFileCrcKey, output);
+            Assert.DoesNotContain(imageCatFileMd5Key, output);
+            Assert.DoesNotContain(imageCatFileSha256Key, output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.End), output);
+
+        }
+
+        [Fact]
+        public async Task InFile_m()
+        {
+
+            var args = new List<string>
+            {
+                Path.Combine("TestFile", "image-cat.png"),
+                "-m"
+            };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.Contains(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.DoesNotContain(imageCatFileTypeValue, output);
+            Assert.DoesNotContain(imageCatFileCrcKey, output);
+            Assert.Contains(imageCatFileMd5Key, output);
+            Assert.DoesNotContain(imageCatFileSha256Key, output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.End), output);
+
+        }
+
+        [Fact]
+        public async Task InFile_s()
+        {
+
+            var args = new List<string>
+            {
+                Path.Combine("TestFile", "image-cat.png"),
+                "-s"
+            };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.Contains(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.DoesNotContain(imageCatFileTypeValue, output);
+            Assert.DoesNotContain(imageCatFileCrcKey, output);
+            Assert.DoesNotContain(imageCatFileMd5Key, output);
+            Assert.Contains(imageCatFileSha256Key, output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.End), output);
+
+        }
+
+        [Fact]
+        public async Task InFile_0s()
+        {
+
+            var args = new List<string>
+            {
+                Path.Combine("TestFile", "image-cat.png"),
+                "-0s"
+            };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.DoesNotContain(imageCatFileTypeValue, output);
+            Assert.DoesNotContain(imageCatFileCrcKey, output);
+            Assert.DoesNotContain(imageCatFileMd5Key, output);
+            Assert.Contains(imageCatFileSha256Key, output);
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
+
+        }
+
+        [Fact]
+        public async Task InFile_0cms()
+        {
+
+            var args = new List<string>
+            {
+                Path.Combine("TestFile", "image-cat.png"),
+                "-0cms"
+            };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.DoesNotContain(imageCatFileTypeValue, output);
+            Assert.Contains(imageCatFileCrcKey, output);
+            Assert.Contains(imageCatFileMd5Key, output);
+            Assert.Contains(imageCatFileSha256Key, output);
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
         }
 
@@ -129,7 +305,9 @@ namespace TestProject
 
             var output = writer.ToString().Trim();
 
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
             Assert.Equal(Language.GetMessage(Language.MessageKey.MatchedInKeysFile, "sha256", imageCatFileSha256Key, 9, 8), output);
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
         }
 
@@ -159,5 +337,29 @@ namespace TestProject
             
         }
 
+
+        [Fact]
+        public async Task InPathAndFileKeys_0s()
+        {
+
+            var args = new List<string>
+            {
+                "TestFile",
+                "imageKeys.txt",
+                "-0s"
+            };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.MatchedInKeysFile, "sha256", imageCatFileSha256Key, 9, 8), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.MatchedInKeysFile, "sha256", imageDogFileSha256Key, 17, 8), output);
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
+
+        }
     }
 }

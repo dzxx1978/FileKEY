@@ -1,0 +1,17 @@
+End=*end*
+DisplayCompletedPressEnterToContinue=Display completed, press enter to continue.
+UnrecognizedParameters=Unrecognized parameters:{0}
+TooManyParameters=Too many parameters:{0}
+PleaseEnterTheFilePath=Please enter the file path:
+PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly=Please enter the file path, Use default input ({0}), Please enter directly:
+TheInputFilePathDoesNotExist=The input file path {0} does not exist
+PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored=Please enter the verification key value or the file path where the key value is stored:
+Wait=Wait >>
+ThereIsNoSuchFile=There is no such file!
+ProcessCompleted= Process completed
+Matched=matched-{0}-{1}
+MatchedInKeysFile=matched-{0}-{1}-{2}.{3}
+Miss=miss-{0}
+NoKeyTheLengthIs=NoKeyTheLengthIs({0})
+NoKeyInFile=NoKeyInFile({0})
+ParameterLanguageUsageErrorMissingLanguageCode=Parameter - Language usage error, missing language code.
