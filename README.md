@@ -41,8 +41,11 @@
         filekey.exe file.dat keys.txt
      ~~~
      
-## 翻译：
-  可以下载`language.txt`文件，将等号后面文字替换成自己方便理解的文字，程序输出文本时将自动替换。  
+## 多语言：
+  程序运行时根据系统语言显示中英文，不支持的语言系统默认显示英文。可以使用`--Language <zh|en|其他>`指定特定语言，指定其他时需要程序运行目录有`language_其他.txt`文件，未找到时显示英文模板及错误提示后退出。
+  ~~~
+     filekey.exe --Language zh
+  ~~~
 
 ## 系统：
   使用.net8开发，应该支持多系统，windows，linux，macos。
