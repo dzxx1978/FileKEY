@@ -66,4 +66,6 @@ public class FileKeyInfo
 
     public string Sha256Normalized => Sha256Hash.Replace("-", "").ToLower();
 
+    public ComparisonInfo ComparisonInfo { get; set; } = new();
+
 }

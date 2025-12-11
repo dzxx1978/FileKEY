@@ -337,6 +337,56 @@ namespace TestProject
             
         }
 
+        [Fact]
+        public async Task InPathAndDogKey_0s()
+        {
+
+            var args = new List<string>
+            {
+                "TestFile",
+                 imageDogFileSha256Key,
+                "-0s"
+           };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, "sha256", imageDogFileSha256Key), output);
+            Assert.DoesNotContain(imageCatFileSha256Key, output);
+            Assert.Contains(Path.GetFullPath(Path.Combine("TestFile", "image-dog.jpg")), output);
+            Assert.DoesNotContain("image-cat.png", output);
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
+
+        }
+
+        [Fact]
+        public async Task InPathAndCatKey_0s()
+        {
+            var args = new List<string>
+            {
+                "TestFile",
+                 imageCatFileSha256Key,
+                "-0s"
+           };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, "sha256", imageCatFileSha256Key), output);
+            Assert.DoesNotContain(imageDogFileSha256Key, output);
+            Assert.Contains(Path.GetFullPath(Path.Combine("TestFile", "image-cat.png")), output);
+            Assert.DoesNotContain("image-dog.jpg", output);
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
+        
+        }
 
         [Fact]
         public async Task InPathAndFileKeys_0s()
