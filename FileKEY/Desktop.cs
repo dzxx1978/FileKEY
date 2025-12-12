@@ -4,6 +4,7 @@ namespace FileKEY
 {
     public class Desktop
     {
+        private List<FileKeyInfo> fileKeyInfos = new List<FileKeyInfo>();
         private FileKey fileKey;
 
         public Desktop()
@@ -27,6 +28,7 @@ namespace FileKEY
                 if (!string.IsNullOrEmpty(AppOption.ComparisonKey))
                     Message.WriteLine($"argskey:{AppOption.ComparisonKey}");
             }
+
 
             do
             {
@@ -53,6 +55,12 @@ namespace FileKEY
                 {
                     var fileKeyInfo = await readFileInfo(file);
 
+                    if (!string.IsNullOrEmpty(AppOption.GroupBy))
+                    {
+                        fileKeyInfos.Add(fileKeyInfo);
+                        continue;
+                    }
+
                     var comparisonInfo = compareChecksums(fileKeyInfo, comparisonKeys);
                     if (displayFileInfo(comparisonInfo, filePaths.Length))
                     {
@@ -63,6 +71,8 @@ namespace FileKEY
 
             }
             while (isContinue());
+
+            displayGroup();
 
             if (AppOption.IsDetailedInfoShown)
                 Message.WriteLine(GetMessage(MessageKey.End));
@@ -103,6 +113,26 @@ namespace FileKEY
                 Message.WriteLine(GetMessage(MessageKey.ProcessCompleted));
 
             return key;
+        }
+
+        private void displayGroup()
+        {
+            if (string.IsNullOrEmpty(AppOption.GroupBy)) return;
+
+            var groups = fileKeyInfos.GroupBy(p => AppOption.GroupBy == "type" ? p.TypeName : p.Sha256Normalized);
+            foreach (var group in groups)
+            {
+                Message.WriteLine($"{group.Key} ({group.Count()})", color: ConsoleColor.Cyan);
+
+                var i = 0;
+                foreach (var fileKeyInfo in group)
+                {
+                    i++;
+                    Message.WriteLine($"  {i}-{Path.GetFullPath(fileKeyInfo.Path)}");
+                }
+
+                Message.WriteLine("");
+            }
         }
 
         private bool displayFileInfo(ComparisonInfo comparisonInfo, int fileCount)

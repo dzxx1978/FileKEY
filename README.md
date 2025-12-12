@@ -47,6 +47,10 @@
         filekey.exe file1.dat --Equals file2.dat
         filekey.exe --Directory path --Equals file.dat -0s
      ~~~
+  6. 执行时使用`GroupBy <type|hash>`参数指定分组显示方式，指定`type`时根据文件类型分组，指定`hash`时根据sha256值分组。  
+     ~~~
+        filekey.exe path --GroupBy hash
+     ~~~
   
 ## 多语言：
   程序运行时根据系统语言显示中英文，不支持的语言系统默认显示英文。可以使用`--Language <zh|en|其他>`指定特定语言，指定其他时需要程序运行目录有`language_其他.txt`文件，未找到时显示英文模板及错误提示后退出。

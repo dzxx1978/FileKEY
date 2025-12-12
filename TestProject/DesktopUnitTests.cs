@@ -430,5 +430,34 @@ namespace TestProject
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
         }
+
+        [Fact]
+        public async Task InPathAndGroupByType()
+        {
+
+            var args = new List<string>
+            {
+                "--Directory",
+                "TestFile",
+                "--GroupBy",
+                "type"
+            };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.DoesNotContain(imageDogFileSha256Key, output);
+            Assert.DoesNotContain(imageCatFileSha256Key, output);
+            Assert.Contains("JPEG(jpg);  (2)", output);
+            Assert.Contains("PNG(png);  (4)", output);
+            Assert.Contains(Path.GetFullPath(imageDogPath), output);
+            Assert.Contains(Path.GetFullPath(imageCatPath), output);
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
+
+        }
     }
 }

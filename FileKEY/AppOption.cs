@@ -1,4 +1,5 @@
 ﻿
+using System.Text.RegularExpressions;
 using static FileKEY.Language;
 
 namespace FileKEY
@@ -77,6 +78,11 @@ namespace FileKEY
         public static string ComparisonKey { get; set; } = "";
 
         /// <summary>
+        /// 分组显示方式（为空时正常显示）
+        /// </summary>
+        public static string GroupBy { get; set; } = "";
+
+        /// <summary>
         /// 是否显示详细信息
         /// </summary>
         public static bool IsDetailedInfoShown { get; set; }
@@ -105,6 +111,8 @@ namespace FileKEY
 
             FileOrDirectoryPath = "";
             ComparisonKey = "";
+
+            GroupBy = "";
 
             IsDetailedInfoShown = true; 
             IsHelpShownAndExit = false;
@@ -145,28 +153,57 @@ namespace FileKEY
                         if (parameter == "-File")
                         {
                             i++;
-                            if (i >= arr.Length || !File.Exists(arr[i]) || AppOption.IsPathFromArgs)
+                            if (i >= arr.Length || !File.Exists(arr[i]) || IsPathFromArgs)
                             {
                                 throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
                             }
 
-                            AppOption.IsPathFromArgs = true;
-                            AppOption.FileOrDirectoryPath = arr[i];
+                            IsPathFromArgs = true;
+                            FileOrDirectoryPath = arr[i];
 
                             continue;
                         }
 
                         if (parameter == "-Directory")
                         {
-                            
+
                             i++;
-                            if (i >= arr.Length || !Directory.Exists(arr[i]) || AppOption.IsPathFromArgs)
+                            if (i >= arr.Length || !Directory.Exists(arr[i]) || IsPathFromArgs)
                             {
                                 throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
                             }
 
-                            AppOption.IsPathFromArgs = true;
-                            AppOption.FileOrDirectoryPath = arr[i];
+                            IsPathFromArgs = true;
+                            FileOrDirectoryPath = arr[i];
+
+                            continue;
+                        }
+
+                        if (parameter == "-FileKeys")
+                        {
+                            i++;
+                            if (i >= arr.Length || !File.Exists(arr[i]))
+                            {
+                                throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                            }
+
+                            if (string.IsNullOrEmpty(GroupBy))
+                                ComparisonKey = arr[i];
+
+                            continue;
+                        }
+
+                        if (parameter == "-Key")
+                        {
+
+                            i++;
+                            if (i >= arr.Length || Directory.Exists(arr[i]))
+                            {
+                                throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                            }
+
+                            if (string.IsNullOrEmpty(GroupBy))
+                                ComparisonKey = arr[i];
 
                             continue;
                         }
@@ -178,9 +215,39 @@ namespace FileKEY
                             {
                                 throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
                             }
+                            if (!string.IsNullOrEmpty(GroupBy)) continue;
 
                             var fileKey = new FileKey(false, false, false, true);
-                            AppOption.ComparisonKey = fileKey.GetFileKeyInfo(arr[i]).Result.Sha256Normalized;
+                            ComparisonKey = fileKey.GetFileKeyInfo(arr[i]).Result.Sha256Normalized;
+
+                            continue;
+                        }
+
+                        if (parameter == "-GroupBy")
+                        {
+                            i++;
+                            if (i >= arr.Length || arr[i] != "type" && arr[i] != "hash")
+                            {
+                                throw new Exception(GetMessage(MessageKey.ParameterError, parameter.Substring(1), "<type|hash>"));
+                            }
+
+                            if (arr[i] == "type")
+                            {
+                                _outTypeOption = 1;
+                                _outCrcOption = 0;
+                                _outMd5Option = 0;
+                                _outSha256Option = 0;
+                            }
+                            else
+                            {
+                                _outTypeOption = 0;
+                                _outCrcOption = 0;
+                                _outMd5Option = 0;
+                                _outSha256Option = 1;
+                            }
+                            IsDetailedInfoShown = false;
+                            ComparisonKey = "";
+                            GroupBy = arr[i];
 
                             continue;
                         }
@@ -188,33 +255,33 @@ namespace FileKEY
                         parameter = parameter.ToUpper();
                         if (parameter.Contains("V"))
                         {
-                            AppOption.IsHelpShownAndExit = true;
+                            IsHelpShownAndExit = true;
                             return;
                         }
                         if (parameter.Contains("T"))
                         {
                             parameter = parameter.Replace("T", "");
-                            AppOption.OutTypeOption = true;
+                            OutTypeOption = true;
                         }
                         if (parameter.Contains("C"))
                         {
                             parameter = parameter.Replace("C", "");
-                            AppOption.OutCrcOption = true;
+                            OutCrcOption = true;
                         }
                         if (parameter.Contains("M"))
                         {
                             parameter = parameter.Replace("M", "");
-                            AppOption.OutMd5Option = true;
+                            OutMd5Option = true;
                         }
                         if (parameter.Contains("S"))
                         {
                             parameter = parameter.Replace("S", "");
-                            AppOption.OutSha256Option = true;
+                            OutSha256Option = true;
                         }
                         if (parameter.Contains("0"))
                         {
                             parameter = parameter.Replace("0", "");
-                            AppOption.IsDetailedInfoShown = false;
+                            IsDetailedInfoShown = false;
                         }
 
                         if (!string.IsNullOrEmpty(parameter))
@@ -222,14 +289,15 @@ namespace FileKEY
                             throw new Exception(GetMessage(MessageKey.UnrecognizedParameters, parameter));
                         }
                     }
-                    else if (string.IsNullOrEmpty(AppOption.FileOrDirectoryPath))
+                    else if (string.IsNullOrEmpty(FileOrDirectoryPath))
                     {
-                        AppOption.IsPathFromArgs = true;
-                        AppOption.FileOrDirectoryPath = arr[i];
+                        IsPathFromArgs = true;
+                        FileOrDirectoryPath = arr[i];
                     }
-                    else if (string.IsNullOrEmpty(AppOption.ComparisonKey))
+                    else if (string.IsNullOrEmpty(ComparisonKey))
                     {
-                        AppOption.ComparisonKey = arr[i];
+                        if (string.IsNullOrEmpty(GroupBy))
+                            ComparisonKey = arr[i];
                     }
                     else
                     {
