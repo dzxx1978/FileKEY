@@ -5,6 +5,10 @@ namespace FileKEY
 {
     public static class Language
     {
+        public static readonly string Crc = "CRC32";
+        public static readonly string Md5 = "MD5";
+        public static readonly string Sha256 = "SHA256";
+
         private static Dictionary<MessageKey, string> messages = new();
 
         public static void Initialize(string language = "")

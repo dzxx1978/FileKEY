@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using static FileKEY.Language;
+﻿using static FileKEY.Language;
 
 namespace FileKEY
 {
@@ -35,7 +34,7 @@ namespace FileKEY
 
                 try
                 {
-                    filePaths = getPaths();
+                    filePaths = getFilePaths();
 
                     if (filePaths is null)
                     {
@@ -54,8 +53,8 @@ namespace FileKEY
                 {
                     var fileKeyInfo = await readFileInfo(file);
 
-                    compareChecksums(fileKeyInfo, comparisonKeys);
-                    if (displayFileInfo(fileKeyInfo, filePaths, comparisonKeys))
+                    var comparisonInfo = compareChecksums(fileKeyInfo, comparisonKeys);
+                    if (displayFileInfo(comparisonInfo, filePaths.Length))
                     {
                         break;
                     }
@@ -106,8 +105,12 @@ namespace FileKEY
             return key;
         }
 
-        private bool displayFileInfo(FileKeyInfo fileKeyInfo, string[] filePaths, string[] comparisonKeys)
+        private bool displayFileInfo(ComparisonInfo comparisonInfo, int fileCount)
         {
+
+            var fileKeyInfo = comparisonInfo.SourceFileKeyInfo!;
+            var comparisonKeys = comparisonInfo.ComparisonKeys!;
+
             if (!fileKeyInfo.Exists)
             {
                 Message.WarningLine(fileKeyInfo.ErrMessage, false);
@@ -133,10 +136,10 @@ namespace FileKEY
                     Message.WriteLine($"sha256:{fileKeyInfo.Sha256Normalized}");
             }
 
-            if (fileKeyInfo.ComparisonInfo.IsEqual)
+            if (comparisonInfo.IsEqual)
             {
-                Message.WriteLine(fileKeyInfo.ComparisonInfo.Message, color: ConsoleColor.Green);
-                if (filePaths.Length > 1 && comparisonKeys.Length == 1)
+                Message.WriteLine(comparisonInfo.ToString(), color: ConsoleColor.Green);
+                if (fileCount > 1 && comparisonKeys.Length == 1)
                 {
                     if (!AppOption.IsDetailedInfoShown)
                     {
@@ -145,88 +148,65 @@ namespace FileKEY
                     return true;
                 }
             }
-            else if (filePaths.Length == 1 || comparisonKeys.Length > 1)
+            else if (fileCount == 1 || comparisonKeys.Length > 1)
             {
-                Message.WarningLine(fileKeyInfo.ComparisonInfo.Message, false);
+                Message.WarningLine(comparisonInfo.ToString(), false);
             }
 
             return false;
         }
 
-        private bool compareChecksums(FileKeyInfo fileKeyInfo, string[] comparisonKeys)
+        private ComparisonInfo compareChecksums(FileKeyInfo fileKeyInfo, string[] comparisonKeys)
         {
-            if (!fileKeyInfo.Exists || comparisonKeys.Length == 0) return false;
+            var comparisonInfo = new ComparisonInfo();
+            comparisonInfo.SourceFileKeyInfo = fileKeyInfo;
+            comparisonInfo.ComparisonKeys = comparisonKeys;
+
+            if (!fileKeyInfo.Exists || comparisonKeys.Length == 0) return comparisonInfo;
 
             var crc = fileKeyInfo.Crc32Normalized;
             var md5 = fileKeyInfo.Md5Normalized;
             var sha256 = fileKeyInfo.Sha256Normalized;
 
-            var matchedHash = "";
-            var matchedHashType = "";
-            var matchedRowIndex = 0;
-            var matchedColumnIndex = 0;
+            var index = 0;
 
             var isComparisonKeyFile = comparisonKeys.Length > 1;
             foreach (var lineKey in comparisonKeys)
             {
-                matchedRowIndex++;
-                matchedColumnIndex = 0;
+                index++;
+                comparisonInfo.InKeyColumn = 0;
 
                 if (AppOption.OutCrcOption && (isComparisonKeyFile && lineKey.Contains(crc) || lineKey == crc))
                 {
-                    matchedHash = crc;
-                    matchedHashType = "CRC";
-                    matchedColumnIndex = lineKey.IndexOf(crc) + 1;
-                    fileKeyInfo.ComparisonInfo.IsCrc32Equal = true;
+                    comparisonInfo.EqualityHashValue = crc;
+                    comparisonInfo.InKeyColumn = lineKey.IndexOf(crc) + 1;
+                    comparisonInfo.IsCrc32Equal = true;
                 }
                 else if (AppOption.OutMd5Option && (isComparisonKeyFile && lineKey.Contains(md5) || lineKey == md5))
                 {
-                    matchedHash = md5;
-                    matchedHashType = "MD5";
-                    matchedColumnIndex = lineKey.IndexOf(md5) + 1;
-                    fileKeyInfo.ComparisonInfo.IsMd5Equal = true;
+                    comparisonInfo.EqualityHashValue = md5;
+                    comparisonInfo.InKeyColumn = lineKey.IndexOf(md5) + 1;
+                    comparisonInfo.IsMd5Equal = true;
                 }
                 else if (AppOption.OutSha256Option && (isComparisonKeyFile && lineKey.Contains(sha256) || lineKey == sha256))
                 {
-                    matchedHash = sha256;
-                    matchedHashType = "sha256";
-                    matchedColumnIndex = lineKey.IndexOf(sha256) + 1;
-                    fileKeyInfo.ComparisonInfo.IsSha256Equal = true;
+                    comparisonInfo.EqualityHashValue = sha256;
+                    comparisonInfo.InKeyColumn = lineKey.IndexOf(sha256) + 1;
+                    comparisonInfo.IsSha256Equal = true;
                 }
 
-                if (matchedColumnIndex > 0)
+                if (comparisonInfo.IsEqual)
                 {
-                    fileKeyInfo.ComparisonInfo.InKeyColumn = matchedColumnIndex;
-                    fileKeyInfo.ComparisonInfo.InKeyRow = matchedRowIndex;
-
-                    if (isComparisonKeyFile)
-                    {
-                        fileKeyInfo.ComparisonInfo.Message = GetMessage(MessageKey.MatchedInKeysFile, matchedHashType, matchedHash, matchedRowIndex, matchedColumnIndex);
-                    }
-                    else
-                    {
-                        fileKeyInfo.ComparisonInfo.Message = GetMessage(MessageKey.Matched, matchedHashType, matchedHash);
-                    }
-                    return true;
+                    comparisonInfo.InKeyRow = index;
+                    break;
                 }
             }
 
-            var outKey = AppOption.OnlyOutHashOption(nameof(AppOption.OutCrcOption)) ? crc
-                : AppOption.OnlyOutHashOption(nameof(AppOption.OutMd5Option)) ? md5
-                : AppOption.OnlyOutHashOption(nameof(AppOption.OutSha256Option)) ? sha256
-                : !isComparisonKeyFile && AppOption.OutCrcOption && crc.Length == AppOption.ComparisonKey.Length ? crc
-                : !isComparisonKeyFile && AppOption.OutMd5Option && md5.Length == AppOption.ComparisonKey.Length ? md5
-                : !isComparisonKeyFile && AppOption.OutSha256Option && sha256.Length == AppOption.ComparisonKey.Length ? sha256
-                : isComparisonKeyFile ? GetMessage(MessageKey.NoKeyInFile, Path.GetFileName(AppOption.ComparisonKey))
-                : GetMessage(MessageKey.NoKeyTheLengthIs, AppOption.ComparisonKey.Length);
-
-            fileKeyInfo.ComparisonInfo.Message = GetMessage(MessageKey.Miss, outKey);
-
-            return false;
+            return comparisonInfo;
 
         }
 
-        private string[]? getPaths()
+        private string[]? getFilePaths()
         {
 
             if (!AppOption.IsPathFromArgs)

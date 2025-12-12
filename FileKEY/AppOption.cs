@@ -111,6 +111,11 @@ namespace FileKEY
             IsPathFromArgs = false;
         }
 
+        /// <summary>
+        /// 解析命令行参数
+        /// </summary>
+        /// <param name="arr">参数列表</param>
+        /// <exception cref="Exception"></exception>
         public static void parseCommandLineArgs(string[] arr)
         {
             initialize();

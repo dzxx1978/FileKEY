@@ -5,13 +5,16 @@ namespace TestProject
 {
     public class DesktopUnitTests : IDisposable
     {
-        string imageCatFileTypeValue = "PNG(png);";
-        string imageCatFileCrcKey = "27E9D872";
-        string imageCatFileMd5Key = "d9ca43935c9663dccecf8c0951cf1ec2";
-        string imageCatFileSha256Key = "de566fbbf3033a30bb72cfd068b932d335d04b56212c78bd8fd87a7c8804819f";
+        private readonly string imageCatFileTypeValue = "PNG(png);";
+        private readonly string imageCatFileCrcKey = "27E9D872";
+        private readonly string imageCatFileMd5Key = "d9ca43935c9663dccecf8c0951cf1ec2";
+        private readonly string imageCatFileSha256Key = "de566fbbf3033a30bb72cfd068b932d335d04b56212c78bd8fd87a7c8804819f";
 
-        string imageDogFileTypeValue = "JPEG(jpg);";
-        string imageDogFileSha256Key = "4a13733b1f6b9e0a16a58aef2fe54db59154eb335da590ef1894eac8c1e16628";
+        private readonly string imageDogFileTypeValue = "JPEG(jpg);";
+        private readonly string imageDogFileSha256Key = "4a13733b1f6b9e0a16a58aef2fe54db59154eb335da590ef1894eac8c1e16628";
+
+        private readonly string imageDogPath = Path.Combine("TestFile", "image-dog.jpg");
+        private readonly string imageCatPath = Path.Combine("TestFile", "image-cat.png");
 
         StringWriter writer;
         public DesktopUnitTests()
@@ -65,7 +68,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png"),
+                imageCatPath,
                 "-t"
             };
 
@@ -90,7 +93,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png"),
+                imageCatPath,
                 "-c"
             };
 
@@ -115,7 +118,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png"),
+                imageCatPath,
                 "-m"
             };
 
@@ -140,7 +143,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png"),
+                imageCatPath,
                 "-s"
             };
 
@@ -165,7 +168,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png"),
+                imageCatPath,
                 "-0s"
             };
 
@@ -190,7 +193,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png"),
+                imageCatPath,
                 "-0cms"
             };
 
@@ -215,7 +218,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png")
+                imageCatPath
             };
 
             AppOption.parseCommandLineArgs(args.ToArray());
@@ -239,7 +242,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png"),
+                imageCatPath,
                 imageCatFileSha256Key
             };
 
@@ -250,7 +253,7 @@ namespace TestProject
             var output = writer.ToString();
 
             Assert.Contains(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
-            Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, "sha256", imageCatFileSha256Key), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, Language.Sha256, imageCatFileSha256Key), output);
             Assert.Contains(Language.GetMessage(Language.MessageKey.End), output);
 
         }
@@ -261,7 +264,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png"),
+                imageCatPath,
                 imageCatFileSha256Key,
                 "-0s"
             };
@@ -272,7 +275,7 @@ namespace TestProject
 
             var output = writer.ToString().Trim();
 
-            Assert.Equal(Language.GetMessage(Language.MessageKey.Matched, "sha256", imageCatFileSha256Key), output);
+            Assert.Equal(Language.GetMessage(Language.MessageKey.Matched, Language.Sha256, imageCatFileSha256Key), output);
 
         }
 
@@ -282,7 +285,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                Path.Combine("TestFile", "image-cat.png"),
+                imageCatPath,
                 "imageKeys.txt",
                 "-0s"
             };
@@ -294,7 +297,7 @@ namespace TestProject
             var output = writer.ToString().Trim();
 
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
-            Assert.Equal(Language.GetMessage(Language.MessageKey.MatchedInKeysFile, "sha256", imageCatFileSha256Key, 9, 8), output);
+            Assert.Equal(Language.GetMessage(Language.MessageKey.MatchedInKeysFile, Language.Sha256, imageCatFileSha256Key, 9, 8), output);
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
         }
@@ -343,9 +346,9 @@ namespace TestProject
             var output = writer.ToString();
 
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
-            Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, "sha256", imageDogFileSha256Key), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, Language.Sha256, imageDogFileSha256Key), output);
             Assert.DoesNotContain(imageCatFileSha256Key, output);
-            Assert.Contains(Path.GetFullPath(Path.Combine("TestFile", "image-dog.jpg")), output);
+            Assert.Contains(Path.GetFullPath(imageDogPath), output);
             Assert.DoesNotContain("image-cat.png", output);
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
@@ -368,9 +371,9 @@ namespace TestProject
             var output = writer.ToString();
 
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
-            Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, "sha256", imageCatFileSha256Key), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, Language.Sha256, imageCatFileSha256Key), output);
             Assert.DoesNotContain(imageDogFileSha256Key, output);
-            Assert.Contains(Path.GetFullPath(Path.Combine("TestFile", "image-cat.png")), output);
+            Assert.Contains(Path.GetFullPath(imageCatPath), output);
             Assert.DoesNotContain("image-dog.jpg", output);
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
         
@@ -394,8 +397,8 @@ namespace TestProject
             var output = writer.ToString();
 
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
-            Assert.Contains(Language.GetMessage(Language.MessageKey.MatchedInKeysFile, "sha256", imageCatFileSha256Key, 9, 8), output);
-            Assert.Contains(Language.GetMessage(Language.MessageKey.MatchedInKeysFile, "sha256", imageDogFileSha256Key, 17, 8), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.MatchedInKeysFile, Language.Sha256, imageCatFileSha256Key, 9, 8), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.MatchedInKeysFile, Language.Sha256, imageDogFileSha256Key, 17, 8), output);
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
         }
