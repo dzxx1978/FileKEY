@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using static FileKEY.Language;
+﻿using static FileKEY.Language;
 
 namespace FileKEY
 {

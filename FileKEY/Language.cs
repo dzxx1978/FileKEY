@@ -65,7 +65,8 @@ namespace FileKEY
             Miss,
             NoKeyTheLengthIs,
             NoKeyInFile,
-            ParameterLanguageUsageErrorMissingLanguageCode
+            ParameterLanguageUsageErrorMissingLanguageCode,
+            ParameterErrorMissingPath,
         }
 
         private static void Initialize_en()
@@ -89,7 +90,8 @@ namespace FileKEY
             messages[MessageKey.NoKeyTheLengthIs]="NoKeyTheLengthIs({0})";
             messages[MessageKey.NoKeyInFile]="NoKeyInFile({0})";
 
-            messages[MessageKey.ParameterLanguageUsageErrorMissingLanguageCode]="Parameter - Language usage error, missing language code.";
+            messages[MessageKey.ParameterLanguageUsageErrorMissingLanguageCode]="Parameter -Language usage error, missing language code.";
+            messages[MessageKey.ParameterErrorMissingPath] ="Parameter -{0} usage error, missing {0} path.";
 
         }
 
@@ -115,7 +117,7 @@ namespace FileKEY
             messages[MessageKey.NoKeyInFile]="没有Hash在文件中被匹配（{0}）";
 
             messages[MessageKey.ParameterLanguageUsageErrorMissingLanguageCode]="参数-Language使用错误，缺少语言代码。";
-
+            messages[MessageKey.ParameterErrorMissingPath] ="参数-{0}使用错误，没有找到{0}的目录。";
         }
 
         public static string GetMessage(MessageKey message, params Object[]? formatArgs)

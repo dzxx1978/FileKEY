@@ -402,5 +402,33 @@ namespace TestProject
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
         }
+
+        [Fact]
+        public async Task InPathAndEqualsDogFile_0s()
+        {
+
+            var args = new List<string>
+            {
+                "--Directory",
+                "TestFile",
+                "--Equals",
+                imageDogPath,
+                "-0s"
+            };
+
+            AppOption.parseCommandLineArgs(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
+            Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, Language.Sha256, imageDogFileSha256Key), output);
+            Assert.DoesNotContain(imageCatFileSha256Key, output);
+            Assert.Contains(Path.GetFullPath(imageDogPath), output);
+            Assert.DoesNotContain("image-cat.png", output);
+            Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
+
+        }
     }
 }

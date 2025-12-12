@@ -26,10 +26,12 @@
      ~~~
         filekey.exe
      ~~~
-  2. 执行时跟一个文件或文件夹，如果包含空格需要在两端加双引号，程序将扫描指定并显示指定的文件信息，然后自动退出。  
+  2. 执行时跟一个文件或文件夹，如果包含空格需要在两端加双引号。可以使用`--File <FilePath>`或`--Directory <DirectoryPath>`明确指定文件或文件夹路径。程序将扫描指定并显示指定的文件信息，然后自动退出。  
      ~~~
         filekey.exe file.dat
+        filekey.exe --File file.dat
         filekey.exe path
+        filekey.exe --Directory path
         filekey.exe "C:\Program Files\file.dat"
      ~~~
   3. 执行时跟一个文件并在空格后跟一个key值，程序将比对指定文件与指定key值，显示是否匹配后退出。  
@@ -40,7 +42,12 @@
      ~~~
         filekey.exe file.dat keys.txt
      ~~~
-     
+  5. 执行时使用`--Equals <FilePath>`指定一个文件，获得这个文件的sha256值，当作key值与指定文件或文件夹中的文件匹配。  
+     ~~~
+        filekey.exe file1.dat --Equals file2.dat
+        filekey.exe --Directory path --Equals file.dat -0s
+     ~~~
+  
 ## 多语言：
   程序运行时根据系统语言显示中英文，不支持的语言系统默认显示英文。可以使用`--Language <zh|en|其他>`指定特定语言，指定其他时需要程序运行目录有`language_其他.txt`文件，未找到时显示英文模板及错误提示后退出。
   ~~~

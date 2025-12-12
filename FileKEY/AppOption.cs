@@ -142,6 +142,49 @@ namespace FileKEY
                             continue;
                         }
 
+                        if (parameter == "-File")
+                        {
+                            i++;
+                            if (i >= arr.Length || !File.Exists(arr[i]) || AppOption.IsPathFromArgs)
+                            {
+                                throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                            }
+
+                            AppOption.IsPathFromArgs = true;
+                            AppOption.FileOrDirectoryPath = arr[i];
+
+                            continue;
+                        }
+
+                        if (parameter == "-Directory")
+                        {
+                            
+                            i++;
+                            if (i >= arr.Length || !Directory.Exists(arr[i]) || AppOption.IsPathFromArgs)
+                            {
+                                throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                            }
+
+                            AppOption.IsPathFromArgs = true;
+                            AppOption.FileOrDirectoryPath = arr[i];
+
+                            continue;
+                        }
+
+                        if (parameter == "-Equals")
+                        {
+                            i++;
+                            if (i >= arr.Length || !File.Exists(arr[i]))
+                            {
+                                throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                            }
+
+                            var fileKey = new FileKey(false, false, false, true);
+                            AppOption.ComparisonKey = fileKey.GetFileKeyInfo(arr[i]).Result.Sha256Normalized;
+
+                            continue;
+                        }
+
                         parameter = parameter.ToUpper();
                         if (parameter.Contains("V"))
                         {
