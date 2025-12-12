@@ -31,10 +31,10 @@
     <None Update="language_test.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="TestFile\animal%281%29.jpg">
+    <None Update="TestFile\chick\animal(1).jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="TestFile\animal%282%29.png">
+    <None Update="TestFile\chick\animal(2).png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="TestFile\animal%283%29.png">

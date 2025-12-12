@@ -250,7 +250,7 @@ namespace FileKEY
             var resultFilePaths = new List<string>();
             if (Directory.Exists(AppOption.FileOrDirectoryPath))
             {
-                return Directory.GetFiles(AppOption.FileOrDirectoryPath);
+                return getSubDirectoryFiles(AppOption.FileOrDirectoryPath, AppOption.SubDirectory).ToArray();
             }
             else if (File.Exists(AppOption.FileOrDirectoryPath))
             {
@@ -261,6 +261,22 @@ namespace FileKEY
                 throw new Exception(GetMessage(MessageKey.TheInputFilePathDoesNotExist, AppOption.FileOrDirectoryPath));
             }
 
+        }
+
+        private List<string> getSubDirectoryFiles(string directoryPath, int subCount)
+        {
+            var resultFilePaths = new List<string>();
+            resultFilePaths.AddRange(Directory.GetFiles(directoryPath));
+            if (subCount > 0)
+            {
+                subCount--;
+                var subDirectories = Directory.GetDirectories(directoryPath);
+                foreach (var subDirectory in subDirectories)
+                {
+                    resultFilePaths.AddRange(getSubDirectoryFiles(subDirectory, subCount));
+                }
+            }
+            return resultFilePaths;
         }
 
         private async Task<string[]> getComparisonKeys()

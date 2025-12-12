@@ -86,6 +86,11 @@ namespace FileKEY
         public static string GroupBy { get; set; } = "";
 
         /// <summary>
+        /// 扫描子目录的层级（0表示不扫描子目录）
+        /// </summary>
+        public static int SubDirectory { get; set; }
+
+        /// <summary>
         /// 是否显示详细信息
         /// </summary>
         public static bool IsDetailedInfoShown { get; set; }
@@ -116,6 +121,7 @@ namespace FileKEY
             ComparisonKey = "";
 
             GroupBy = "";
+            SubDirectory = 0;
 
             IsDetailedInfoShown = true;
             IsHelpShownAndExit = false;
@@ -178,6 +184,20 @@ namespace FileKEY
 
                             IsPathFromArgs = true;
                             FileOrDirectoryPath = arr[i];
+
+                            continue;
+                        }
+
+                        if (parameter == "-SubDirectory")
+                        {
+
+                            i++;
+                            if (i >= arr.Length || !int.TryParse(arr[i], out int subDirectory))
+                            {
+                                throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                            }
+
+                            SubDirectory = subDirectory;
 
                             continue;
                         }

@@ -438,6 +438,8 @@ namespace TestProject
             {
                 "--Directory",
                 "TestFile",
+                "--SubDirectory",
+                "1",
                 "--GroupBy",
                 "type"
             };
