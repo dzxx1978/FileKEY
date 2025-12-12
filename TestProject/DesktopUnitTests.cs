@@ -1,5 +1,4 @@
 using FileKEY;
-using System.Text;
 
 namespace TestProject
 {
@@ -325,7 +324,7 @@ namespace TestProject
             Assert.Contains(imageCatFileSha256Key, output);
             Assert.Contains(imageDogFileSha256Key, output);
             Assert.Contains(Language.GetMessage(Language.MessageKey.End), output);
-            
+
         }
 
         [Fact]
@@ -376,7 +375,7 @@ namespace TestProject
             Assert.Contains(Path.GetFullPath(imageCatPath), output);
             Assert.DoesNotContain("image-dog.jpg", output);
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
-        
+
         }
 
         [Fact]

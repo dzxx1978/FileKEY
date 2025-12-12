@@ -73,7 +73,7 @@ public class FileKey
             key.Exists = false;
             return key;
         }
-        
+
         key.Name = fileInfo.Name;
         key.Length = fileInfo.Length;
         key.Time = fileInfo.LastWriteTime;
@@ -177,7 +177,7 @@ public class FileKey
             }
         }
 
-        if (fileType.Length==0)
+        if (fileType.Length == 0)
             fileType.Append(fileBytes);
 
         return fileType.ToString();

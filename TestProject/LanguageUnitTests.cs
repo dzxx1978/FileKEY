@@ -1,5 +1,4 @@
 ﻿using FileKEY;
-using System.Text;
 
 namespace TestProject
 {

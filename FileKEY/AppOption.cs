@@ -1,6 +1,4 @@
-﻿
-using System.Text.RegularExpressions;
-using static FileKEY.Language;
+﻿using static FileKEY.Language;
 
 namespace FileKEY
 {
@@ -18,7 +16,8 @@ namespace FileKEY
         /// </summary>
         /// <param name="hashName">哈希选项名称</param>
         /// <returns></returns>
-        public static bool OnlyOutHashOption(string hashName) {
+        public static bool OnlyOutHashOption(string hashName)
+        {
 
             var optionCount = 0;
             var optionName = "";
@@ -38,7 +37,8 @@ namespace FileKEY
         /// <summary>
         /// 是否计算并输出文件类型
         /// </summary>
-        public static bool OutTypeOption { 
+        public static bool OutTypeOption
+        {
             get => _outTypeOption > _outMaxOption;
             set => _outTypeOption = value ? 2 : 0;
         }
@@ -46,7 +46,8 @@ namespace FileKEY
         /// <summary>
         /// 是否计算并输出CRC32哈希值
         /// </summary>
-        public static bool OutCrcOption { 
+        public static bool OutCrcOption
+        {
             get => _outCrcOption > _outMaxOption;
             set => _outCrcOption = value ? 2 : 0;
         }
@@ -54,7 +55,8 @@ namespace FileKEY
         /// <summary>
         /// 是否计算并输出MD5哈希值
         /// </summary>
-        public static bool OutMd5Option { 
+        public static bool OutMd5Option
+        {
             get => _outMd5Option > _outMaxOption;
             set => _outMd5Option = value ? 2 : 0;
         }
@@ -62,7 +64,8 @@ namespace FileKEY
         /// <summary>
         /// 是否计算并输出SHA256哈希值
         /// </summary>
-        public static bool OutSha256Option { 
+        public static bool OutSha256Option
+        {
             get => _outSha256Option > _outMaxOption;
             set => _outSha256Option = value ? 2 : 0;
         }
@@ -114,7 +117,7 @@ namespace FileKEY
 
             GroupBy = "";
 
-            IsDetailedInfoShown = true; 
+            IsDetailedInfoShown = true;
             IsHelpShownAndExit = false;
             IsPathFromArgs = false;
         }

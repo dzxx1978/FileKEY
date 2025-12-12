@@ -76,22 +76,22 @@ namespace FileKEY
             messages[MessageKey.End] = "*END*";
             messages[MessageKey.DisplayCompletedPressEnterToContinue] = "Display completed, press enter to continue.";
             messages[MessageKey.UnrecognizedParameters] = "Unrecognized parameters:{0}";
-            messages[MessageKey.TooManyParameters]="Too many parameters:{0}";
-            messages[MessageKey.PleaseEnterTheFilePath]="Please enter the file path:";
-            messages[MessageKey.PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly]="Please enter the file path, Use default input ({0}), Please enter directly:";
-            messages[MessageKey.TheInputFilePathDoesNotExist]="The input file path {0} does not exist";
-            messages[MessageKey.PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored]="Please enter the verification key value or the file path where the key value is stored:";
-            messages[MessageKey.Wait]="Wait >>";
-            messages[MessageKey.ThereIsNoSuchFile]="There is no such file!";
-            messages[MessageKey.ProcessCompleted]=" Process completed";
-            messages[MessageKey.Matched]="matched-{0}-{1}";
-            messages[MessageKey.MatchedInKeysFile]="matched-{0}-{1}-{2}.{3}";
-            messages[MessageKey.Miss]="miss-{0}";
+            messages[MessageKey.TooManyParameters] = "Too many parameters:{0}";
+            messages[MessageKey.PleaseEnterTheFilePath] = "Please enter the file path:";
+            messages[MessageKey.PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly] = "Please enter the file path, Use default input ({0}), Please enter directly:";
+            messages[MessageKey.TheInputFilePathDoesNotExist] = "The input file path {0} does not exist";
+            messages[MessageKey.PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored] = "Please enter the verification key value or the file path where the key value is stored:";
+            messages[MessageKey.Wait] = "Wait >>";
+            messages[MessageKey.ThereIsNoSuchFile] = "There is no such file!";
+            messages[MessageKey.ProcessCompleted] = " Process completed";
+            messages[MessageKey.Matched] = "matched-{0}-{1}";
+            messages[MessageKey.MatchedInKeysFile] = "matched-{0}-{1}-{2}.{3}";
+            messages[MessageKey.Miss] = "miss-{0}";
 
-            messages[MessageKey.NoKeyTheLengthIs]="NoKeyTheLengthIs({0})";
-            messages[MessageKey.NoKeyInFile]="NoKeyInFile({0})";
+            messages[MessageKey.NoKeyTheLengthIs] = "NoKeyTheLengthIs({0})";
+            messages[MessageKey.NoKeyInFile] = "NoKeyInFile({0})";
 
-            messages[MessageKey.ParameterLanguageUsageErrorMissingLanguageCode]="Parameter -Language usage error, missing language code.";
+            messages[MessageKey.ParameterLanguageUsageErrorMissingLanguageCode] = "Parameter -Language usage error, missing language code.";
             messages[MessageKey.ParameterErrorMissingPath] = "Parameter -{0} usage error, missing {0} path.";
             messages[MessageKey.ParameterError] = "Parameter -{0} usage error, Lack of necessary values {1}.";
 
@@ -100,26 +100,26 @@ namespace FileKEY
         private static void Initialize_zh()
         {
 
-            messages[MessageKey.End]="*结束*";
-            messages[MessageKey.DisplayCompletedPressEnterToContinue]="显示完毕，按回车继续下一个。";
-            messages[MessageKey.UnrecognizedParameters]="无法识别的参数：{0}";
-            messages[MessageKey.TooManyParameters]="参数过多：{0}";
-            messages[MessageKey.PleaseEnterTheFilePath]="请输入文件路径：";
-            messages[MessageKey.PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly]="请输入文件路径，使用默认输入（{0}），请直接回车：";
-            messages[MessageKey.TheInputFilePathDoesNotExist]="输入的文件路径{0}不存在";
-            messages[MessageKey.PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored]="请输入验证Key值或存储Key值的文件路径：";
-            messages[MessageKey.Wait]="稍等 >>";
-            messages[MessageKey.ThereIsNoSuchFile]="没有这个文件！";
-            messages[MessageKey.ProcessCompleted]=" 处理完毕";
-            messages[MessageKey.Matched]="已匹配-{0}-{1}";
-            messages[MessageKey.MatchedInKeysFile]="已匹配-{0}-{1}-{2}.{3}";
-            messages[MessageKey.Miss]="不相同-{0}";
+            messages[MessageKey.End] = "*结束*";
+            messages[MessageKey.DisplayCompletedPressEnterToContinue] = "显示完毕，按回车继续下一个。";
+            messages[MessageKey.UnrecognizedParameters] = "无法识别的参数：{0}";
+            messages[MessageKey.TooManyParameters] = "参数过多：{0}";
+            messages[MessageKey.PleaseEnterTheFilePath] = "请输入文件路径：";
+            messages[MessageKey.PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly] = "请输入文件路径，使用默认输入（{0}），请直接回车：";
+            messages[MessageKey.TheInputFilePathDoesNotExist] = "输入的文件路径{0}不存在";
+            messages[MessageKey.PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored] = "请输入验证Key值或存储Key值的文件路径：";
+            messages[MessageKey.Wait] = "稍等 >>";
+            messages[MessageKey.ThereIsNoSuchFile] = "没有这个文件！";
+            messages[MessageKey.ProcessCompleted] = " 处理完毕";
+            messages[MessageKey.Matched] = "已匹配-{0}-{1}";
+            messages[MessageKey.MatchedInKeysFile] = "已匹配-{0}-{1}-{2}.{3}";
+            messages[MessageKey.Miss] = "不相同-{0}";
 
-            messages[MessageKey.NoKeyTheLengthIs]="没有Hash的长度是（{0}）";
-            messages[MessageKey.NoKeyInFile]="没有Hash在文件中被匹配（{0}）";
+            messages[MessageKey.NoKeyTheLengthIs] = "没有Hash的长度是（{0}）";
+            messages[MessageKey.NoKeyInFile] = "没有Hash在文件中被匹配（{0}）";
 
-            messages[MessageKey.ParameterLanguageUsageErrorMissingLanguageCode]="参数-Language使用错误，缺少语言代码。";
-            messages[MessageKey.ParameterErrorMissingPath] ="参数-{0}使用错误，没有找到{0}的目录。";
+            messages[MessageKey.ParameterLanguageUsageErrorMissingLanguageCode] = "参数-Language使用错误，缺少语言代码。";
+            messages[MessageKey.ParameterErrorMissingPath] = "参数-{0}使用错误，没有找到{0}的目录。";
             messages[MessageKey.ParameterError] = "参数-{0}使用错误， 缺少必要的附加参数{1}.";
 
         }

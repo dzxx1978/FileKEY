@@ -43,7 +43,8 @@ public static class Message
     /// 存储新的文本
     /// </summary>
     /// <param name="message"></param>
-    public static void AddSaveString(string message) {
+    public static void AddSaveString(string message)
+    {
         saveString.AppendLine(message.Trim());
     }
 
@@ -73,7 +74,8 @@ public static class Message
     /// </summary>
     /// <param name="left">x坐标</param>
     /// <param name="top">y坐标</param>
-    public static void SetPos(int left, int top) {
+    public static void SetPos(int left, int top)
+    {
         try
         {
             Console.SetCursorPosition(left, top);
@@ -502,7 +504,7 @@ public static class Message
 
             break;
         }
-        return defaultPath.Replace("\"","").Trim();
+        return defaultPath.Replace("\"", "").Trim();
     }
 
     /// <summary>
