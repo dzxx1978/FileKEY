@@ -34,22 +34,28 @@
         filekey.exe --Directory path
         filekey.exe "C:\Program Files\file.dat"
      ~~~
-  3. 执行时跟一个文件并在空格后跟一个key值，程序将比对指定文件与指定key值，显示是否匹配后退出。  
+  3. 执行时跟一个文件并在空格后跟一个key值，或者使用`--Key <key>`，程序将比对指定文件与指定key值，显示是否匹配后退出。  
      ~~~
         filekey.exe file.dat bfa2dfbf5e3208ceebaf268e3bb8896e6dcbeb7af6d2c56d7f48c2fd849a3d1e
+        filekey.exe file.dat --Key bfa2dfbf5e3208ceebaf268e3bb8896e6dcbeb7af6d2c56d7f48c2fd849a3d1e
      ~~~
-  4. 执行时跟一个文件并在空格后跟一个包含key值的文件，程序将计算第一个文件的key值并与指定key文件中记录的值匹配，显示是否匹配到文件中第几行第几列的key值后退出。  
+  4. 执行时跟一个文件并在空格后跟一个包含key值的文件，程序将计算第一个文件的key值并与指定key文件中记录的值匹配,或者使用`--FileKeys <keys.txt>`，显示是否匹配到文件中第几行第几列的key值后退出。  
      ~~~
         filekey.exe file.dat keys.txt
+        filekey.exe file.dat --FileKeys keys.txt
      ~~~
   5. 执行时使用`--Equals <FilePath>`指定一个文件，获得这个文件的sha256值，当作key值与指定文件或文件夹中的文件匹配。  
      ~~~
         filekey.exe file1.dat --Equals file2.dat
         filekey.exe --Directory path --Equals file.dat -0s
      ~~~
-  6. 执行时使用`GroupBy <type|hash>`参数指定分组显示方式，指定`type`时根据文件类型分组，指定`hash`时根据sha256值分组。  
+  6. 执行时使用`--GroupBy <type|hash>`参数指定分组显示方式，指定`type`时根据文件类型分组，指定`hash`时根据sha256值分组。  
      ~~~
         filekey.exe path --GroupBy hash
+     ~~~
+  7. 执行时使用`--SubDirectory <1|2|3|...>`设置扫描子文件夹层级数。  
+     ~~~
+        filekey.exe path --SubDirectory 2
      ~~~
   
 ## 多语言：
