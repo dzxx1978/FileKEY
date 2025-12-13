@@ -5,6 +5,7 @@ namespace FileKEY
 {
     public static class Language
     {
+        public static readonly string Type = "type";
         public static readonly string Crc = "CRC32";
         public static readonly string Md5 = "MD5";
         public static readonly string Sha256 = "SHA256";

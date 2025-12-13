@@ -155,13 +155,13 @@ namespace FileKEY
             if (AppOption.IsDetailedInfoShown || string.IsNullOrEmpty(AppOption.ComparisonKey))
             {
                 if (AppOption.OutTypeOption)
-                    Message.WriteLine($"type:{fileKeyInfo.TypeName}");
+                    Message.WriteLine($"{Language.Type}:{fileKeyInfo.TypeName}");
                 if (AppOption.OutCrcOption)
-                    Message.WriteLine($"crc:{fileKeyInfo.Crc32Normalized}");
+                    Message.WriteLine($"{Language.Crc}:{fileKeyInfo.Crc32Normalized}");
                 if (AppOption.OutMd5Option)
-                    Message.WriteLine($"md5:{fileKeyInfo.Md5Normalized}");
+                    Message.WriteLine($"{Language.Md5}:{fileKeyInfo.Md5Normalized}");
                 if (AppOption.OutSha256Option)
-                    Message.WriteLine($"sha256:{fileKeyInfo.Sha256Normalized}");
+                    Message.WriteLine($"{Language.Sha256}:{fileKeyInfo.Sha256Normalized}");
             }
 
             if (comparisonInfo.IsEqual)
