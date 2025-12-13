@@ -29,7 +29,6 @@ namespace FileKEY
                     Message.WriteLine($"argskey:{AppOption.ComparisonKey}");
             }
 
-
             do
             {
                 string[]? filePaths;
@@ -68,11 +67,10 @@ namespace FileKEY
                     }
                 }
 
+                displayGroup();
 
             }
             while (isContinue());
-
-            displayGroup();
 
             if (AppOption.IsDetailedInfoShown)
                 Message.WriteLine(GetMessage(MessageKey.End));
@@ -120,7 +118,7 @@ namespace FileKEY
             if (string.IsNullOrEmpty(AppOption.GroupBy)) return;
 
             var groups = fileKeyInfos.GroupBy(p => AppOption.GroupBy == "type" ? p.TypeName : p.Sha256Normalized);
-            foreach (var group in groups)
+            foreach (var group in groups.Where(p => p.Count() >= AppOption.GroupMinCount))
             {
                 Message.WriteLine($"{group.Key} ({group.Count()})", color: ConsoleColor.Cyan);
 
@@ -281,6 +279,8 @@ namespace FileKEY
 
         private async Task<string[]> getComparisonKeys()
         {
+            if (!string.IsNullOrEmpty(AppOption.GroupBy))
+                return Array.Empty<string>();
 
             var comparisonKey = AppOption.IsPathFromArgs
                 ? AppOption.ComparisonKey

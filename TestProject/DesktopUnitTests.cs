@@ -441,7 +441,9 @@ namespace TestProject
                 "--SubDirectory",
                 "1",
                 "--GroupBy",
-                "type"
+                "type",
+                "--GroupMinCount",
+                "3"
             };
 
             AppOption.parseCommandLineArgs(args.ToArray());
@@ -453,9 +455,9 @@ namespace TestProject
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.ProcessCompleted), output);
             Assert.DoesNotContain(imageDogFileSha256Key, output);
             Assert.DoesNotContain(imageCatFileSha256Key, output);
-            Assert.Contains("JPEG(jpg);  (2)", output);
+            Assert.DoesNotContain("JPEG(jpg);  (2)", output);
             Assert.Contains("PNG(png);  (4)", output);
-            Assert.Contains(Path.GetFullPath(imageDogPath), output);
+            Assert.DoesNotContain(Path.GetFullPath(imageDogPath), output);
             Assert.Contains(Path.GetFullPath(imageCatPath), output);
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 

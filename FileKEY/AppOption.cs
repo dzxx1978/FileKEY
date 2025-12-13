@@ -91,6 +91,11 @@ namespace FileKEY
         public static int SubDirectory { get; set; }
 
         /// <summary>
+        /// 分组显示时的最小数量
+        /// </summary>
+        public static int GroupMinCount { get; set; }
+        
+        /// <summary>
         /// 是否显示详细信息
         /// </summary>
         public static bool IsDetailedInfoShown { get; set; }
@@ -122,6 +127,7 @@ namespace FileKEY
 
             GroupBy = "";
             SubDirectory = 0;
+            GroupMinCount = 1;
 
             IsDetailedInfoShown = true;
             IsHelpShownAndExit = false;
@@ -194,7 +200,7 @@ namespace FileKEY
                             i++;
                             if (i >= arr.Length || !int.TryParse(arr[i], out int subDirectory))
                             {
-                                throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                                throw new Exception(GetMessage(MessageKey.ParameterError, parameter.Substring(1), "<1|2|3|...>"));
                             }
 
                             SubDirectory = subDirectory;
@@ -249,12 +255,12 @@ namespace FileKEY
                         if (parameter == "-GroupBy")
                         {
                             i++;
-                            if (i >= arr.Length || arr[i] != "type" && arr[i] != "hash")
+                            if (i >= arr.Length || arr[i].ToLower() != "type" && arr[i].ToLower() != "hash")
                             {
                                 throw new Exception(GetMessage(MessageKey.ParameterError, parameter.Substring(1), "<type|hash>"));
                             }
 
-                            if (arr[i] == "type")
+                            if (arr[i].ToLower() == "type")
                             {
                                 _outTypeOption = 1;
                                 _outCrcOption = 0;
@@ -270,7 +276,21 @@ namespace FileKEY
                             }
                             IsDetailedInfoShown = false;
                             ComparisonKey = "";
-                            GroupBy = arr[i];
+                            GroupBy = arr[i].ToLower();
+
+                            continue;
+                        }
+
+                        if (parameter == "-GroupMinCount")
+                        {
+
+                            i++;
+                            if (i >= arr.Length || !int.TryParse(arr[i], out int groupMinCount))
+                            {
+                                throw new Exception(GetMessage(MessageKey.ParameterError, parameter.Substring(1), "<1|2|3|...>"));
+                            }
+
+                            GroupMinCount = groupMinCount;
 
                             continue;
                         }
