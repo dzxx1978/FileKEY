@@ -71,6 +71,11 @@ namespace FileKEY
         }
 
         /// <summary>
+        /// 是否为分组显示选项
+        /// </summary>
+        public static bool IsGroup => !string.IsNullOrEmpty(GroupBy);
+
+        /// <summary>
         /// 文件或目录的路径
         /// </summary>
         public static string FileOrDirectoryPath { get; set; } = "";
@@ -94,7 +99,7 @@ namespace FileKEY
         /// 分组显示时的最小数量
         /// </summary>
         public static int GroupMinCount { get; set; }
-        
+
         /// <summary>
         /// 是否显示详细信息
         /// </summary>

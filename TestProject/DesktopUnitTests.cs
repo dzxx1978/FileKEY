@@ -4,13 +4,13 @@ namespace TestProject
 {
     public class DesktopUnitTests : IDisposable
     {
-        private readonly string imageCatFileTypeValue = "PNG(png);";
-        private readonly string imageCatFileCrcKey = "27E9D872";
-        private readonly string imageCatFileMd5Key = "d9ca43935c9663dccecf8c0951cf1ec2";
-        private readonly string imageCatFileSha256Key = "de566fbbf3033a30bb72cfd068b932d335d04b56212c78bd8fd87a7c8804819f";
+        private const string imageCatFileTypeValue = "PNG(png);";
+        private const string imageCatFileCrcKey = "27E9D872";
+        private const string imageCatFileMd5Key = "d9ca43935c9663dccecf8c0951cf1ec2";
+        private const string imageCatFileSha256Key = "de566fbbf3033a30bb72cfd068b932d335d04b56212c78bd8fd87a7c8804819f";
 
-        private readonly string imageDogFileTypeValue = "JPEG(jpg);";
-        private readonly string imageDogFileSha256Key = "4a13733b1f6b9e0a16a58aef2fe54db59154eb335da590ef1894eac8c1e16628";
+        private const string imageDogFileTypeValue = "JPEG(jpg);";
+        private const string imageDogFileSha256Key = "4a13733b1f6b9e0a16a58aef2fe54db59154eb335da590ef1894eac8c1e16628";
 
         private readonly string imageDogPath = Path.Combine("TestFile", "image-dog.jpg");
         private readonly string imageCatPath = Path.Combine("TestFile", "image-cat.png");
@@ -40,9 +40,9 @@ namespace TestProject
 
             await new Desktop().GanHuoer();
 
-            var output = Language.GetHelpShown();
+            var output = writer.ToString();
 
-            Assert.Equal(writer.ToString(), output);
+            Assert.Equal(Language.GetHelpShown(), output);
 
         }
 
@@ -348,7 +348,7 @@ namespace TestProject
             Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, Language.Sha256, imageDogFileSha256Key), output);
             Assert.DoesNotContain(imageCatFileSha256Key, output);
             Assert.Contains(Path.GetFullPath(imageDogPath), output);
-            Assert.DoesNotContain("image-cat.png", output);
+            Assert.DoesNotContain(Path.GetFileName(imageCatPath), output);
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
         }
@@ -373,7 +373,7 @@ namespace TestProject
             Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, Language.Sha256, imageCatFileSha256Key), output);
             Assert.DoesNotContain(imageDogFileSha256Key, output);
             Assert.Contains(Path.GetFullPath(imageCatPath), output);
-            Assert.DoesNotContain("image-dog.jpg", output);
+            Assert.DoesNotContain(Path.GetFileName(imageDogPath), output);
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
         }
@@ -425,7 +425,7 @@ namespace TestProject
             Assert.Contains(Language.GetMessage(Language.MessageKey.Matched, Language.Sha256, imageDogFileSha256Key), output);
             Assert.DoesNotContain(imageCatFileSha256Key, output);
             Assert.Contains(Path.GetFullPath(imageDogPath), output);
-            Assert.DoesNotContain("image-cat.png", output);
+            Assert.DoesNotContain(Path.GetFileName(imageCatPath), output);
             Assert.DoesNotContain(Language.GetMessage(Language.MessageKey.End), output);
 
         }

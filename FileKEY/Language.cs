@@ -142,10 +142,10 @@ https://github.com/dzxx1978/FileKEY
 FileKEY {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString()} by zxx 2025
 FileKEY [path] [key] [-0tcms]
  -0 small print
- -t only type
- -c only crc
- -m only md5
- -s only sha256
+ -t only {Language.Type}
+ -c only {Language.Crc}
+ -m only {Language.Md5}
+ -s only {Language.Sha256}
 ";
         }
 

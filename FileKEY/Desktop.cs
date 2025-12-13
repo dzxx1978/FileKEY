@@ -6,6 +6,7 @@ namespace FileKEY
     {
         private List<FileKeyInfo> fileKeyInfos = new List<FileKeyInfo>();
         private FileKey fileKey;
+        private int beginTop = 0;
 
         public Desktop()
         {
@@ -50,11 +51,12 @@ namespace FileKEY
 
                 var comparisonKeys = await getComparisonKeys();
 
+                Message.GetPos(out _, out beginTop);
                 foreach (var file in filePaths)
                 {
                     var fileKeyInfo = await readFileInfo(file);
 
-                    if (!string.IsNullOrEmpty(AppOption.GroupBy))
+                    if (AppOption.IsGroup)
                     {
                         fileKeyInfos.Add(fileKeyInfo);
                         continue;
@@ -100,6 +102,10 @@ namespace FileKEY
             {
                 Message.Write(GetMessage(MessageKey.Wait));
                 task1 = Message.WriteLoop(">*", cancellationToken: tk.Token);
+            }
+            else if (AppOption.IsGroup && !Console.IsOutputRedirected) {
+                Message.Write(GetMessage(MessageKey.Wait), 0, beginTop);
+                Message.WriteLine($" {fileKeyInfos.Count + 1} {file}");
             }
 
             var key = await fileKey.GetFileKeyInfo(file, tk.Token);
@@ -279,7 +285,7 @@ namespace FileKEY
 
         private async Task<string[]> getComparisonKeys()
         {
-            if (!string.IsNullOrEmpty(AppOption.GroupBy))
+            if (AppOption.IsGroup)
                 return Array.Empty<string>();
 
             var comparisonKey = AppOption.IsPathFromArgs
