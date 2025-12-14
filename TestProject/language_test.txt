@@ -15,3 +15,5 @@ Miss=miss-{0}
 NoKeyTheLengthIs=NoKeyTheLengthIs({0})
 NoKeyInFile=NoKeyInFile({0})
 ParameterLanguageUsageErrorMissingLanguageCode=Parameter - Language usage error, missing language code.
+ParameterErrorMissingPath=Parameter -{0} usage error, missing {0} path.
+ParameterError=Parameter -{0} usage error, Lack of necessary values {1}.
