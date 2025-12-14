@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using static FileKEY.Language;
+﻿using static FileKEY.Language;
 
 namespace FileKEY
 {
@@ -33,13 +32,13 @@ namespace FileKEY
 
             do
             {
-                string[]? filePaths;
+                string[]? fileFullPaths;
 
                 try
                 {
-                    filePaths = getFilePaths();
+                    fileFullPaths = getFilePaths();
 
-                    if (filePaths is null)
+                    if (fileFullPaths is null)
                     {
                         break;
                     }
@@ -53,9 +52,9 @@ namespace FileKEY
                 var comparisonKeys = await getComparisonKeys();
 
                 Message.GetPos(out _, out beginTop);
-                foreach (var file in filePaths)
+                foreach (var fileFullPath in fileFullPaths)
                 {
-                    var fileKeyInfo = await readFileInfo(file);
+                    var fileKeyInfo = await readFileInfo(fileFullPath);
 
                     if (AppOption.IsGroup)
                     {
@@ -63,7 +62,7 @@ namespace FileKEY
                     }
 
                     var comparisonInfo = compareChecksums(fileKeyInfo, comparisonKeys);
-                    if (displayFileInfo(comparisonInfo, filePaths.Length))
+                    if (displayFileInfo(comparisonInfo, fileFullPaths.Length))
                     {
                         break;
                     }
@@ -92,7 +91,7 @@ namespace FileKEY
             return false;
         }
 
-        private async Task<FileKeyInfo> readFileInfo(string file)
+        private async Task<FileKeyInfo> readFileInfo(string fileFullPath)
         {
 
             Task task1 = Task.Run(() => { });
@@ -103,12 +102,13 @@ namespace FileKEY
                 Message.Write(GetMessage(MessageKey.Wait));
                 task1 = Message.WriteLoop(">*", cancellationToken: tk.Token);
             }
-            else if (AppOption.IsGroup && !Console.IsOutputRedirected) {
+            else if (AppOption.IsGroup && !Console.IsOutputRedirected)
+            {
                 Message.Write(GetMessage(MessageKey.Wait), 0, beginTop);
-                Message.WriteLine($" {fileKeyInfos.Count + 1} {file}");
+                task1 = Message.WriteLoop(">*", cancellationToken: tk.Token);
+                Message.Write($" {fileKeyInfos.Count + 1} {fileFullPath}");
             }
 
-            var fileFullPath = Path.GetFullPath(file);
             FileKeyInfo fileKeyInfo;
             if (fileKeyInfos.ContainsKey(fileFullPath))
             {
@@ -116,7 +116,7 @@ namespace FileKEY
             }
             else
             {
-                fileKeyInfo = await fileKey.GetFileKeyInfo(file, tk.Token);
+                fileKeyInfo = await fileKey.GetFileKeyInfo(fileFullPath, tk.Token);
                 fileKeyInfos.Add(fileFullPath, fileKeyInfo);
             }
 
@@ -131,7 +131,8 @@ namespace FileKEY
 
         private void displayGroup()
         {
-            if (string.IsNullOrEmpty(AppOption.GroupBy)) return;
+            if (!AppOption.IsGroup) return;
+            Message.WriteLine("");
 
             var groups = fileKeyInfos.Values.GroupBy(p => AppOption.GroupBy == "type" ? p.TypeName : p.Sha256Normalized);
             foreach (var group in groups.Where(p => p.Count() >= AppOption.GroupMinCount))
@@ -268,7 +269,7 @@ namespace FileKEY
             }
             else if (File.Exists(AppOption.FileOrDirectoryPath))
             {
-                return [AppOption.FileOrDirectoryPath];
+                return [Path.GetFullPath(AppOption.FileOrDirectoryPath)];
             }
             else
             {
