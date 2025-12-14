@@ -1,10 +1,11 @@
-﻿using static FileKEY.Language;
+﻿using System.Linq;
+using static FileKEY.Language;
 
 namespace FileKEY
 {
     public class Desktop
     {
-        private List<FileKeyInfo> fileKeyInfos = new List<FileKeyInfo>();
+        private Dictionary<string, FileKeyInfo> fileKeyInfos = new();
         private FileKey fileKey;
 
         public Desktop()
@@ -56,7 +57,6 @@ namespace FileKEY
 
                     if (!string.IsNullOrEmpty(AppOption.GroupBy))
                     {
-                        fileKeyInfos.Add(fileKeyInfo);
                         continue;
                     }
 
@@ -102,7 +102,17 @@ namespace FileKEY
                 task1 = Message.WriteLoop(">*", cancellationToken: tk.Token);
             }
 
-            var key = await fileKey.GetFileKeyInfo(file, tk.Token);
+            var fileFullPath = Path.GetFullPath(file);
+            FileKeyInfo fileKeyInfo;
+            if (fileKeyInfos.ContainsKey(fileFullPath))
+            {
+                fileKeyInfo = fileKeyInfos[fileFullPath];
+            }
+            else
+            {
+                fileKeyInfo = await fileKey.GetFileKeyInfo(file, tk.Token);
+                fileKeyInfos.Add(fileFullPath, fileKeyInfo);
+            }
 
             tk.Cancel();
             await task1;
@@ -110,14 +120,14 @@ namespace FileKEY
             if (AppOption.IsDetailedInfoShown)
                 Message.WriteLine(GetMessage(MessageKey.ProcessCompleted));
 
-            return key;
+            return fileKeyInfo;
         }
 
         private void displayGroup()
         {
             if (string.IsNullOrEmpty(AppOption.GroupBy)) return;
 
-            var groups = fileKeyInfos.GroupBy(p => AppOption.GroupBy == "type" ? p.TypeName : p.Sha256Normalized);
+            var groups = fileKeyInfos.Values.GroupBy(p => AppOption.GroupBy == "type" ? p.TypeName : p.Sha256Normalized);
             foreach (var group in groups.Where(p => p.Count() >= AppOption.GroupMinCount))
             {
                 Message.WriteLine($"{group.Key} ({group.Count()})", color: ConsoleColor.Cyan);
