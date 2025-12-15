@@ -4,6 +4,9 @@ namespace FileKEY
 {
     public class Desktop
     {
+        string[]? fileFullPaths;
+        string[]? comparisonKeys;
+
         private Dictionary<string, FileKeyInfo> fileKeyInfos = new();
         private FileKey fileKey;
         private int beginTop = 0;
@@ -32,7 +35,6 @@ namespace FileKEY
 
             do
             {
-                string[]? fileFullPaths;
 
                 try
                 {
@@ -49,7 +51,7 @@ namespace FileKEY
                     continue;
                 }
 
-                var comparisonKeys = await getComparisonKeys();
+                comparisonKeys = await getComparisonKeys();
 
                 Message.GetPos(out _, out beginTop);
                 foreach (var fileFullPath in fileFullPaths)
@@ -106,7 +108,7 @@ namespace FileKEY
             {
                 Message.Write(GetMessage(MessageKey.Wait), 0, beginTop);
                 task1 = Message.WriteLoop(">*", cancellationToken: tk.Token);
-                Message.Write($" {fileKeyInfos.Count + 1} {fileFullPath}");
+                Message.Write($" {fileKeyInfos.Count + (fileKeyInfos.ContainsKey(fileFullPath) ? 0 : 1)} {fileFullPath}");
             }
 
             FileKeyInfo fileKeyInfo;
@@ -254,26 +256,29 @@ namespace FileKEY
         private string[]? getFilePaths()
         {
 
-            if (!AppOption.IsPathFromArgs)
-                AppOption.FileOrDirectoryPath = Message.ReadPath(GetMessage(MessageKey.PleaseEnterTheFilePath), AppOption.FileOrDirectoryPath);
+            var fileOrDirectoryPath = string.IsNullOrEmpty(AppOption.FileOrDirectoryPath)
+                ? Message.ReadPath(GetMessage(MessageKey.PleaseEnterTheFilePath), string.Empty)
+                : AppOption.FileOrDirectoryPath;
 
-            if (string.IsNullOrEmpty(AppOption.FileOrDirectoryPath) || AppOption.FileOrDirectoryPath.ToLower() == "exit")
+            AppOption.FileOrDirectoryPath = string.Empty;
+
+            if (fileOrDirectoryPath.ToLower() == "exit")
             {
                 return null;
             }
 
             var resultFilePaths = new List<string>();
-            if (Directory.Exists(AppOption.FileOrDirectoryPath))
+            if (Directory.Exists(fileOrDirectoryPath))
             {
-                return getSubDirectoryFiles(AppOption.FileOrDirectoryPath, AppOption.SubDirectory).ToArray();
+                return getSubDirectoryFiles(fileOrDirectoryPath, AppOption.SubDirectory).ToArray();
             }
-            else if (File.Exists(AppOption.FileOrDirectoryPath))
+            else if (File.Exists(fileOrDirectoryPath))
             {
-                return [Path.GetFullPath(AppOption.FileOrDirectoryPath)];
+                return [Path.GetFullPath(fileOrDirectoryPath)];
             }
             else
             {
-                throw new Exception(GetMessage(MessageKey.TheInputFilePathDoesNotExist, AppOption.FileOrDirectoryPath));
+                throw new Exception(GetMessage(MessageKey.TheInputFilePathDoesNotExist, fileOrDirectoryPath));
             }
 
         }

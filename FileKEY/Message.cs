@@ -306,7 +306,7 @@ public static class Message
 
         WriteLine("");
         GetPos(out var left, out var top1);
-        Write($"请用键盘选择菜单，并按回车键确认！{select}");
+        Write(Language.GetMessage(Language.MessageKey.MenuSelected, select));
 
         while (true)
         {
@@ -337,7 +337,7 @@ public static class Message
                 ShowOptionString(select, select, menus[select], top);
                 defaultNum = select;
                 SetPos(left, top1);
-                Write($"请用键盘选择菜单，并按回车键确认！{select}");
+                Write(Language.GetMessage(Language.MessageKey.MenuSelected, select));
             }
         }
 
@@ -514,34 +514,33 @@ public static class Message
     /// <param name="returnLength">数字允许最大长度（0=不限制）</param>
     /// <param name="defaultValue">默认数字</param>
     /// <returns>数字</returns>
-    public static string ReadNumber(string title, int returnLength = 0, string defaultValue = "")
+    public static string ReadNumber(string title, int returnLength = 0, decimal defaultValue = 0)
     {
 
         string numString = "";
 
         while (true)
         {
-            doPrint(false, $"请输入{title}：");
+            doPrint(false, title);
             numString = Console.ReadLine() ?? "";
-            if (string.IsNullOrEmpty(numString) && string.IsNullOrEmpty(defaultValue) == false)
+            if (string.IsNullOrEmpty(numString))
             {
-                numString = defaultValue;
+                numString = defaultValue.ToString();
             }
-            if (int.TryParse(numString, out int xkhNum))
+            if (decimal.TryParse(numString, out decimal outNum))
             {
                 if (returnLength > 0)
                 {
-                    numString = xkhNum.ToString(new string('0', returnLength));
+                    numString = outNum.ToString(new string('0', returnLength));
                 }
                 else
                 {
-                    numString = xkhNum.ToString();
+                    numString = outNum.ToString();
                 }
             }
             else
             {
-                doPrint(true, $"{title}应该是{returnLength}位数字！请重新输入。");
-                continue;
+                numString = defaultValue.ToString();
             }
             break;
         }

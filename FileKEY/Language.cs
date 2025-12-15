@@ -1,5 +1,4 @@
-﻿
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace FileKEY
 {
@@ -57,7 +56,9 @@ namespace FileKEY
             PleaseEnterTheFilePath,
             PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly,
             TheInputFilePathDoesNotExist,
+            PleaseEnterTheMinimumNumberOfGroupsToDisplay,
             PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored,
+            PleaseEnterTheNumberOfScannedSubdirectoriesAtDifferentLevels,
             Wait,
             ThereIsNoSuchFile,
             ProcessCompleted,
@@ -69,6 +70,16 @@ namespace FileKEY
             ParameterLanguageUsageErrorMissingLanguageCode,
             ParameterErrorMissingPath,
             ParameterError,
+            MenuTitle,
+            MenuSetPath,
+            MenuSetKey,
+            MenuSetOptions,
+            MenuShowOptions,
+            MenuShowHelp,
+            MenuRun,
+            MenuClose,
+            MenuReSet,
+            MenuSelected,
         }
 
         private static void Initialize_en()
@@ -81,7 +92,10 @@ namespace FileKEY
             messages[MessageKey.PleaseEnterTheFilePath] = "Please enter the file path:";
             messages[MessageKey.PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly] = "Please enter the file path, Use default input ({0}), Please enter directly:";
             messages[MessageKey.TheInputFilePathDoesNotExist] = "The input file path {0} does not exist";
+            messages[MessageKey.PleaseEnterTheMinimumNumberOfGroupsToDisplay] = "Please enter the minimum number of members to be displayed in the group, Use default input ({0})：";
             messages[MessageKey.PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored] = "Please enter the verification key value or the file path where the key value is stored:";
+            messages[MessageKey.PleaseEnterTheNumberOfScannedSubdirectoriesAtDifferentLevels] = "Please enter the number of scanned subdirectories at different levels, Use default input ({0}):";
+
             messages[MessageKey.Wait] = "Wait >>";
             messages[MessageKey.ThereIsNoSuchFile] = "There is no such file!";
             messages[MessageKey.ProcessCompleted] = " Process completed";
@@ -96,6 +110,17 @@ namespace FileKEY
             messages[MessageKey.ParameterErrorMissingPath] = "Parameter -{0} usage error, missing {0} path.";
             messages[MessageKey.ParameterError] = "Parameter -{0} usage error, Lack of necessary values {1}.";
 
+            messages[MessageKey.MenuTitle] = "FileKey Menu";
+            messages[MessageKey.MenuSetPath] = "Set file or directory path";
+            messages[MessageKey.MenuSetKey] = "Set matching key value";
+            messages[MessageKey.MenuSetOptions] = "Set other options";
+            messages[MessageKey.MenuShowOptions] = "Show options";
+            messages[MessageKey.MenuShowHelp] = "Help";
+            messages[MessageKey.MenuRun] = "Run";
+            messages[MessageKey.MenuRun] = "Close";
+            messages[MessageKey.MenuReSet] = "Reset";
+            messages[MessageKey.MenuSelected] = "Please select the menu and press Enter to confirm!{0}";
+
         }
 
         private static void Initialize_zh()
@@ -108,7 +133,10 @@ namespace FileKEY
             messages[MessageKey.PleaseEnterTheFilePath] = "请输入文件路径：";
             messages[MessageKey.PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly] = "请输入文件路径，使用默认输入（{0}），请直接回车：";
             messages[MessageKey.TheInputFilePathDoesNotExist] = "输入的文件路径{0}不存在";
+            messages[MessageKey.PleaseEnterTheMinimumNumberOfGroupsToDisplay] = "请输入需要显示的分组最少成员数，默认值（{0}）：";
             messages[MessageKey.PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored] = "请输入验证Key值或存储Key值的文件路径：";
+            messages[MessageKey.PleaseEnterTheNumberOfScannedSubdirectoriesAtDifferentLevels] = "请输入扫描子目录层级数量，默认值（{0}）：";
+
             messages[MessageKey.Wait] = "稍等 >>";
             messages[MessageKey.ThereIsNoSuchFile] = "没有这个文件！";
             messages[MessageKey.ProcessCompleted] = " 处理完毕";
@@ -123,6 +151,16 @@ namespace FileKEY
             messages[MessageKey.ParameterErrorMissingPath] = "参数-{0}使用错误，没有找到{0}的目录。";
             messages[MessageKey.ParameterError] = "参数-{0}使用错误， 缺少必要的附加参数{1}.";
 
+            messages[MessageKey.MenuTitle] = "FileKey菜单";
+            messages[MessageKey.MenuSetPath] = "设置文件或文件夹路径";
+            messages[MessageKey.MenuSetKey] = "设置匹配Key值";
+            messages[MessageKey.MenuSetOptions] = "设置其他选项";
+            messages[MessageKey.MenuShowOptions] = "显示已设置的选项";
+            messages[MessageKey.MenuShowHelp] = "帮助";
+            messages[MessageKey.MenuRun] = "开始";
+            messages[MessageKey.MenuClose] = "关闭";
+            messages[MessageKey.MenuReSet] = "重置";
+            messages[MessageKey.MenuSelected] = "请选择菜单，并按回车键确认！{0}";
         }
 
         public static string GetMessage(MessageKey message, params Object[]? formatArgs)

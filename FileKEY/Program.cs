@@ -2,13 +2,13 @@
 
 try
 {
-    AppOption.parseCommandLineArgs(args.ToArray());
+    AppOption.ShowMenu(args.ToList());
 }
 catch (Exception ex)
 {
-    AppOption.IsHelpShownAndExit = true;
-    AppOption.IsDetailedInfoShown = true;
     Message.WarningLine(ex.Message, false);
+    Message.Write(Language.GetHelpShown());
+    return;
 }
 
 await new Desktop().GanHuoer();

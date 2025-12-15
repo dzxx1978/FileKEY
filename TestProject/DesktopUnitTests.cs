@@ -36,7 +36,7 @@ namespace TestProject
                 "-v"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -55,9 +55,9 @@ namespace TestProject
                 "--Language",
                 "test"
             };
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
-            Assert.Equal("*end*", Language.GetMessage(Language.MessageKey.End));
+            Assert.Equal("*Test end*", Language.GetMessage(Language.MessageKey.End));
 
         }
 
@@ -71,7 +71,7 @@ namespace TestProject
                 "-t"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -96,7 +96,7 @@ namespace TestProject
                 "-c"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -121,7 +121,7 @@ namespace TestProject
                 "-m"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -146,7 +146,7 @@ namespace TestProject
                 "-s"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -171,7 +171,7 @@ namespace TestProject
                 "-0s"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -196,7 +196,7 @@ namespace TestProject
                 "-0cms"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -220,7 +220,7 @@ namespace TestProject
                 imageCatPath
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -245,7 +245,7 @@ namespace TestProject
                 imageCatFileSha256Key
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -268,7 +268,7 @@ namespace TestProject
                 "-0s"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -289,7 +289,7 @@ namespace TestProject
                 "-0s"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -310,7 +310,7 @@ namespace TestProject
                 "TestFile"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -338,7 +338,7 @@ namespace TestProject
                 "-0s"
            };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -363,7 +363,7 @@ namespace TestProject
                 "-0s"
            };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            var outOptions = AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -389,7 +389,8 @@ namespace TestProject
                 "-0s"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            var outOptions = AppOption.SetOptions(args.ToArray());
+            Assert.True(outOptions.Count() == 2);
 
             await new Desktop().GanHuoer();
 
@@ -415,7 +416,8 @@ namespace TestProject
                 "-0s"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            var outOptions = AppOption.SetOptions(args.ToArray());
+            Assert.True(outOptions.Count() == 6);
 
             await new Desktop().GanHuoer();
 
@@ -446,7 +448,8 @@ namespace TestProject
                 "3"
             };
 
-            AppOption.parseCommandLineArgs(args.ToArray());
+            var outOptions = AppOption.SetOptions(args.ToArray());
+            Assert.True(outOptions.Count() == 8);
 
             await new Desktop().GanHuoer();
 
