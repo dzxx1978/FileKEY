@@ -1,4 +1,5 @@
-﻿using static FileKEY.Language;
+﻿using System.Linq;
+using static FileKEY.Language;
 
 namespace FileKEY
 {
@@ -181,8 +182,7 @@ namespace FileKEY
                             IsPathFromArgs = true;
                             FileOrDirectoryPath = options[i];
 
-                            outOptions.Add($"--File");
-                            outOptions.Add(options[i]);
+                            setOption(outOptions, true, "--File", FileOrDirectoryPath);
 
                         }
                         else if (parameter == "-Directory")
@@ -197,8 +197,7 @@ namespace FileKEY
                             IsPathFromArgs = true;
                             FileOrDirectoryPath = options[i];
 
-                            outOptions.Add($"--Directory");
-                            outOptions.Add(options[i]);
+                            setOption(outOptions, true, "--Directory", FileOrDirectoryPath);
 
                         }
                         else if (parameter == "-SubDirectory")
@@ -212,8 +211,7 @@ namespace FileKEY
 
                             SubDirectory = subDirectory;
 
-                            outOptions.Add($"--SubDirectory");
-                            outOptions.Add(subDirectory.ToString());
+                            setOption(outOptions, true, "--SubDirectory", SubDirectory.ToString());
 
                         }
                         else if (parameter == "-FileKeys")
@@ -228,8 +226,7 @@ namespace FileKEY
                             {
                                 ComparisonKey = options[i];
 
-                                outOptions.Add($"--FileKeys");
-                                outOptions.Add(options[i]);
+                                setOption(outOptions, true, "--FileKeys", ComparisonKey);
 
                             }
 
@@ -246,10 +243,7 @@ namespace FileKEY
                             if (string.IsNullOrEmpty(GroupBy))
                             {
                                 ComparisonKey = options[i];
-
-                                outOptions.Add($"--Key");
-                                outOptions.Add(options[i]);
-
+                                setOption(outOptions, true, "--Key", ComparisonKey);
                             }
 
                         }
@@ -265,8 +259,7 @@ namespace FileKEY
                             var fileKey = new FileKey(false, false, false, true);
                             ComparisonKey = fileKey.GetFileKeyInfo(options[i]).Result.Sha256Normalized;
 
-                            outOptions.Add($"--Key");
-                            outOptions.Add(ComparisonKey);
+                            setOption(outOptions, true, "--Key", ComparisonKey);
 
                         }
                         else if (parameter == "-GroupBy")
@@ -295,8 +288,7 @@ namespace FileKEY
                             ComparisonKey = "";
                             GroupBy = options[i].ToLower();
 
-                            outOptions.Add($"--GroupBy");
-                            outOptions.Add(GroupBy);
+                            setOption(outOptions, true, "--GroupBy", GroupBy);
 
                         }
                         else if (parameter == "-GroupMinCount")
@@ -309,9 +301,7 @@ namespace FileKEY
                             }
 
                             GroupMinCount = groupMinCount;
-
-                            outOptions.Add($"--GroupMinCount");
-                            outOptions.Add(GroupMinCount.ToString());
+                            setOption(outOptions, true, "--GroupMinCount", GroupMinCount.ToString());
 
 
                         }
@@ -333,31 +323,31 @@ namespace FileKEY
                             {
                                 parameter = parameter.Replace("T", "");
                                 OutTypeOption = true;
-                                outOptions.Add($"-t");
+                                setOption(outOptions, true, "-t");
                             }
                             if (parameter.Contains("C"))
                             {
                                 parameter = parameter.Replace("C", "");
                                 OutCrcOption = true;
-                                outOptions.Add($"-c");
+                                setOption(outOptions, true, "-c");
                             }
                             if (parameter.Contains("M"))
                             {
                                 parameter = parameter.Replace("M", "");
                                 OutMd5Option = true;
-                                outOptions.Add($"-m");
+                                setOption(outOptions, true, "-m");
                             }
                             if (parameter.Contains("S"))
                             {
                                 parameter = parameter.Replace("S", "");
                                 OutSha256Option = true;
-                                outOptions.Add($"-s");
+                                setOption(outOptions, true, "-s");
                             }
                             if (parameter.Contains("0"))
                             {
                                 parameter = parameter.Replace("0", "");
                                 IsDetailedInfoShown = false;
-                                outOptions.Add($"-0");
+                                setOption(outOptions, true, "-0");
                             }
 
                             if (!string.IsNullOrEmpty(parameter))
@@ -387,6 +377,28 @@ namespace FileKEY
             return outOptions;
         }
 
+        private static void setOption(List<string> options, bool isDelete, params string[] newOptions)
+        {
+
+            if (isDelete)
+            {
+                var oldOptionsIndex = options.IndexOf(newOptions[0]);
+                if (oldOptionsIndex >= 0)
+                {
+                    for (var i = 0; i < newOptions.Length; i++)
+                    {
+                        if (options.Count() > oldOptionsIndex)
+                        {
+                            options.RemoveAt(oldOptionsIndex);
+                        }
+                    }
+                }
+            }
+
+            options.AddRange(newOptions);
+
+        }
+
         public static void ShowMenu(List<string> options)
         {
             options = SetOptions(options.ToArray());
@@ -414,10 +426,10 @@ namespace FileKEY
                 switch (menuSelected)
                 {
                     case 1:
-                        setPath(options);
+                        showMenuPathOptions(options);
                         break;
                     case 2:
-                        setKey(options);
+                        showMenuKeyOptions(options);
                         break;
                     case 3:
                         showMenuOptions(options);
@@ -457,6 +469,7 @@ namespace FileKEY
                 "GroupMinCount",//3
                 "SubDirectory",//4
                 "Hash",//5
+                "Display",//6
                 GetMessage(MessageKey.MenuClose),
             };
 
@@ -467,7 +480,7 @@ namespace FileKEY
                 switch (optionSelected)
                 {
                     case 1:
-                        setKey(options, "Equals");
+                        showMenuKeyOptions(options, "Equals");
                         break;
                     case 2:
                         showMenuGroupByOptions(options);
@@ -481,44 +494,90 @@ namespace FileKEY
                     case 5:
                         showMenuHashOptions(options);
                         break;
+                    case 6:
+                        showMenuDisplayOptions(options);
+                        break;
                 }
+
             } while (optionSelected < menuOptions.Count() - 1);
+
         }
 
         private static void showMenuGroupByOptions(List<string> options)
         {
-            var groupBy = 0;
-            var fromMenuIndex = options.IndexOf("--GroupBy");
-            if (fromMenuIndex >= 0)
-            {
-                int.TryParse(options[fromMenuIndex + 1].ToLower() == "type" ? "2" : "3", out groupBy);
-                options.RemoveAt(fromMenuIndex);
-                options.RemoveAt(fromMenuIndex);
-            }
+            var groupBySelected = 0;
+            var menuOptions = new string[] { };
 
-            var groupBySelected = Message.ShowSelectMenu(groupBy,
-            [
-                "--GroupBy",
-                "None",//1
-                "Type",//2
-                "Hash",//3
-            ]);
-
-            switch (groupBySelected)
+            do
             {
-                case 1:
-                    break;
-                case 2:
-                    options.Add("--GroupBy");
-                    options.Add("type");
-                    break;
-                case 3:
-                    options.Add("--GroupBy");
-                    options.Add("hash");
-                    break;
-            }
+                var groupBy = 0;
+                var fromMenuIndex = options.IndexOf("--GroupBy");
+                if (fromMenuIndex >= 0)
+                {
+                    groupBy = options[fromMenuIndex + 1].ToLower() == "type" ? 2 : 3;
+                }
+
+                menuOptions = [
+                    "--GroupBy",
+                    "None",//1
+                    $"[{(groupBy==2 ? "T" : " ")}] Type",//2
+                    $"[{(groupBy==3 ? "H" : " ")}] Hash",//3
+                    GetMessage(MessageKey.MenuClose),
+                ];
+
+                groupBySelected = Message.ShowSelectMenu(groupBy, menuOptions);
+
+                switch (groupBySelected)
+                {
+                    case 1:
+                        if (fromMenuIndex >= 0)
+                        {
+                            options.RemoveAt(fromMenuIndex);
+                            options.RemoveAt(fromMenuIndex);
+                        }
+                        break;
+                    case 2:
+                        options.Add("--GroupBy");
+                        options.Add("type");
+                        goto case 1;
+                    case 3:
+                        options.Add("--GroupBy");
+                        options.Add("hash");
+                        goto case 1;
+                }
+
+            } while (groupBySelected < menuOptions.Count() - 1);
+
         }
 
+        private static void showMenuDisplayOptions(List<string> options)
+        {
+            var displaySelected = 0;
+            var menuOptions = new string[] { };
+            do
+            {
+                menuOptions = [
+                    "-0 Display",
+                    $"Detailed",//1
+                    $"[{(options.Contains("-0") ? "0" : " ")}] small",//2
+                    GetMessage(MessageKey.MenuClose),
+                ];
+
+                displaySelected = Message.ShowSelectMenu(displaySelected, menuOptions);
+
+                switch (displaySelected)
+                {
+                    case 1:
+                        options.Remove("-0");
+                        break;
+                    case 2:
+                        options.Remove("-0");
+                        options.Add("-0");
+                        break;
+                }
+
+            } while (displaySelected < menuOptions.Count() - 1);
+        }
 
         private static void showMenuHashOptions(List<string> options)
         {
@@ -527,12 +586,12 @@ namespace FileKEY
             do
             {
                 menuOptions = [
-                    "--Hash",
+                    "-tcms Hash",
                     "All",
-                    $"({(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-t") ? "V" : "X" : "v")}) {Language.Type}",
-                    $"({(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-c") ? "V" : "X" : "v")}) {Language.Crc}",
-                    $"({(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-m") ? "V" : "X" : "v")}) {Language.Md5}",
-                    $"({(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-s") ? "V" : "X" : "v")}) {Language.Sha256}",
+                    $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-t") ? "T" : " " : "t")}] {Language.Type}",
+                    $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-c") ? "C" : " " : "c")}] {Language.Crc}",
+                    $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-m") ? "M" : " " : "m")}] {Language.Md5}",
+                    $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-s") ? "S" : " " : "s")}] {Language.Sha256}",
                     GetMessage(MessageKey.MenuClose),
                 ];
 
@@ -541,20 +600,10 @@ namespace FileKEY
                 switch (hashSelected)
                 {
                     case 1:
-                        if (options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s"))
-                        {
-                            options.Remove("-t");
-                            options.Remove("-c");
-                            options.Remove("-m");
-                            options.Remove("-s");
-                        }
-                        else
-                        {
-                            options.Add("-t");
-                            options.Add("-c");
-                            options.Add("-m");
-                            options.Add("-s");
-                        }
+                        options.Remove("-t");
+                        options.Remove("-c");
+                        options.Remove("-m");
+                        options.Remove("-s");
                         break;
                     case 2:
                         if (options.Contains("-t"))
@@ -598,7 +647,9 @@ namespace FileKEY
                         break;
                 }
             } while (hashSelected < menuOptions.Count() - 1);
+
         }
+
         private static void showMenuGroupMinCountOptions(List<string> options)
         {
             var groupMinCount = "0";
@@ -647,9 +698,9 @@ namespace FileKEY
             }
         }
 
-        private static void setPath(List<string> options)
+        private static void showMenuPathOptions(List<string> options)
         {
-            var fileOrDirectoryPath = Message.ReadPath(GetMessage(MessageKey.PleaseEnterTheFilePath), AppOption.FileOrDirectoryPath);
+            var fileOrDirectoryPath = Message.ReadPath(GetMessage(MessageKey.PleaseEnterTheFilePath), FileOrDirectoryPath);
             if (File.Exists(fileOrDirectoryPath))
             {
                 options.Add("--File");
@@ -677,7 +728,7 @@ namespace FileKEY
             FileOrDirectoryPath = fileOrDirectoryPath;
         }
 
-        private static void setKey(List<string> options, string optionName = "")
+        private static void showMenuKeyOptions(List<string> options, string optionName = "")
         {
             var fromMenuIndex = options.IndexOf("--FileKeys");
             if (fromMenuIndex < 0)
