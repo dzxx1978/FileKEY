@@ -126,7 +126,7 @@ namespace FileKEY
             await task1;
 
             if (AppOption.IsDetailedInfoShown)
-                Message.WriteLine(GetMessage(MessageKey.ProcessCompleted));
+                Message.WriteLine($" {GetMessage(MessageKey.ProcessCompleted)}");
 
             return fileKeyInfo;
         }

@@ -406,23 +406,23 @@ namespace FileKEY
             if (IsPathFromArgs || IsHelpShownAndExit)
                 return;
 
-            var menuOptions = new string[]
-            {
-                GetMessage(MessageKey.MenuTitle),
-                GetMessage(MessageKey.MenuSetPath),//1
-                GetMessage(MessageKey.MenuSetKey),//2
-                GetMessage(MessageKey.MenuSetOtherOptions),//3
-                GetMessage(MessageKey.MenuConfigFiles),//4
-                GetMessage(MessageKey.MenuShowOptions),//5
-                GetMessage(MessageKey.MenuShowHelp),//6
-                GetMessage(MessageKey.MenuReSet),//7
-                "Language",//8
-                GetMessage(MessageKey.MenuRun),
-            };
+            var menuOptions = new string[] { };           
             var menuSelected = menuOptions.Count() - 1;
 
             do
             {
+                menuOptions = [
+                    GetMessage(MessageKey.MenuTitle),
+                    GetMessage(MessageKey.MenuSetPath),//1
+                    GetMessage(MessageKey.MenuSetKey),//2
+                    GetMessage(MessageKey.MenuSetOtherOptions),//3
+                    GetMessage(MessageKey.MenuConfigFiles),//4
+                    GetMessage(MessageKey.MenuShowOptions),//5
+                    GetMessage(MessageKey.MenuShowHelp),//6
+                    GetMessage(MessageKey.MenuReSet),//7
+                    "Language",//8
+                    GetMessage(MessageKey.MenuRun),
+               ];
                 menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
                 switch (menuSelected)
@@ -486,14 +486,19 @@ namespace FileKEY
                         var configFileName = Message.ReadString(GetMessage(MessageKey.PleaseEnterTheConfigurationFileName));
                         if (!string.IsNullOrEmpty(configFileName))
                         {
-                            if (!configFileName.StartsWith("Language_"))
+                            configFileName = configFileName.Split('.')[0];
+                            if (configFileName.ToLower().StartsWith("language_"))
                             {
-                                configFileName = "Language_" + configFileName;
+                                configFileName = configFileName.Substring(9);
                             }
-                            if (!configFileName.EndsWith(".txt"))
+                            if (string.IsNullOrEmpty(configFileName)
+                                || configFileName.ToLower() == "en-US".ToLower() || configFileName.ToLower() == "en"
+                                || configFileName.ToLower() == "zh-CN".ToLower() || configFileName.ToLower() == "zh")
                             {
-                                configFileName += ".txt";
+                                configFileName += "-Custom";
+                                configFileName= configFileName.Replace("--", "-");
                             }
+                            configFileName = $"Language_{configFileName}.txt".Replace("__","_").Replace("_-","_");
                             configFileName = Path.Combine(GetConfigRootPath("Language"), configFileName);
 
                             for (var i = 0; i < language.Count; i++)
@@ -507,22 +512,42 @@ namespace FileKEY
                                 }
                             }
 
-                            File.WriteAllLines(configFileName, language);
+                            try
+                            {
+                                File.WriteAllLines(configFileName, language);
+                            }
+                            catch { }
 
                             Message.WriteLine(configFileName);
                             Message.Wait();
                         }
                         break;
                     case 2:
-                        Initialize("en");
-                        break;
                     case 3:
-                        Initialize("zh");
+                        Initialize(menuOptions[languageSelected].Split('-')[0]);
                         break;
                     default:
                         if (languageSelected < menuOptions.Count() - 1)
                         {
-                            Initialize(Path.GetFileNameWithoutExtension(languageFiles[languageSelected - 4]).Replace("Language_", ""));
+                            var selectedLanguage = languageFiles[languageSelected - 4];
+
+                            var setOrDel = Message.ShowSelectMenu(0, [
+                                    selectedLanguage,
+                                    GetMessage(MessageKey.Set),//1
+                                    GetMessage(MessageKey.Del),//2
+                                    GetMessage(MessageKey.MenuClose),
+                                ]);
+
+                            switch (setOrDel)
+                            {
+                                case 1:
+                                    Initialize(Path.GetFileNameWithoutExtension(selectedLanguage).Substring(9));
+                                    break;
+                                case 2:
+                                    File.Delete(selectedLanguage);
+                                    break;
+                            }
+
                         }
                         break;
                 }
@@ -535,7 +560,7 @@ namespace FileKEY
             var optionsString = new StringBuilder();
 
             if (options.Count == 0)
-                optionsString.AppendLine("None");
+                optionsString.AppendLine(GetMessage(MessageKey.None));
 
             foreach (var option in options)
             {
@@ -588,11 +613,13 @@ namespace FileKEY
                     var configFileName = Message.ReadString(GetMessage(MessageKey.PleaseEnterTheConfigurationFileName));
                     if (!string.IsNullOrEmpty(configFileName))
                     {
-                        if (!configFileName.EndsWith(".txt"))
+                        configFileName = configFileName.Split('.')[0];
+                        configFileName += ".txt";
+                        try
                         {
-                            configFileName += ".txt";
+                            File.WriteAllLines(Path.Combine(GetConfigRootPath("Option"), configFileName), options);
                         }
-                        File.WriteAllLines(Path.Combine(GetConfigRootPath("Option"), configFileName), options);
+                        catch { }
                     }
                 }
                 else if (configSelected < menuOptions.Count() - 1)
@@ -621,8 +648,8 @@ namespace FileKEY
                 "GroupBy",//2
                 "GroupMinCount",//3
                 "SubDirectory",//4
-                "Hash",//5
-                "Display",//6
+                GetMessage(MessageKey.Hash),//5
+                GetMessage(MessageKey.Display),//6
                 GetMessage(MessageKey.MenuClose),
             };
 
@@ -710,9 +737,9 @@ namespace FileKEY
             do
             {
                 menuOptions = [
-                    "-0 Display",
-                    $"Detailed",//1
-                    $"[{(options.Contains("-0") ? "0" : " ")}] small",//2
+                    $"-0 {GetMessage(MessageKey.Display)}",
+                    GetMessage(MessageKey.Detailed),//1
+                    $"[{(options.Contains("-0") ? "0" : " ")}] {GetMessage(MessageKey.Small)}",//2
                     GetMessage(MessageKey.MenuClose),
                 ];
 
@@ -739,8 +766,8 @@ namespace FileKEY
             do
             {
                 menuOptions = [
-                    "-tcms Hash",
-                    "All",
+                    $"-tcms {GetMessage(MessageKey.Hash)}",
+                    GetMessage(MessageKey.All),
                     $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-t") ? "T" : " " : "t")}] {Language.Type}",
                     $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-c") ? "C" : " " : "c")}] {Language.Crc}",
                     $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-m") ? "M" : " " : "m")}] {Language.Md5}",

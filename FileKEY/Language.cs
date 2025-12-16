@@ -84,6 +84,14 @@ namespace FileKEY
             MenuSelected,
             SaveCurrentOptions,
             PleaseEnterTheConfigurationFileName,
+            Set,
+            Del,
+            None,
+            Detailed,
+            Small,
+            Display,
+            Hash,
+            All,
         }
 
         private static void Initialize_en()
@@ -102,7 +110,7 @@ namespace FileKEY
 
             messages[MessageKey.Wait] = "Wait >>";
             messages[MessageKey.ThereIsNoSuchFile] = "There is no such file!";
-            messages[MessageKey.ProcessCompleted] = " Process completed";
+            messages[MessageKey.ProcessCompleted] = "Process completed";
             messages[MessageKey.Matched] = "matched-{0}-{1}";
             messages[MessageKey.MatchedInKeysFile] = "matched-{0}-{1}-{2}.{3}";
             messages[MessageKey.Miss] = "miss-{0}";
@@ -122,7 +130,7 @@ namespace FileKEY
             messages[MessageKey.MenuShowOptions] = "Show options";
             messages[MessageKey.MenuShowHelp] = "Help";
             messages[MessageKey.MenuRun] = "Run";
-            messages[MessageKey.MenuRun] = "Close";
+            messages[MessageKey.MenuClose] = "Close";
             messages[MessageKey.MenuReSet] = "Reset";
             messages[MessageKey.MenuSelected] = "Please select the menu and press Enter to confirm!{0}";
 
@@ -147,7 +155,7 @@ namespace FileKEY
 
             messages[MessageKey.Wait] = "稍等 >>";
             messages[MessageKey.ThereIsNoSuchFile] = "没有这个文件！";
-            messages[MessageKey.ProcessCompleted] = " 处理完毕";
+            messages[MessageKey.ProcessCompleted] = "处理完毕";
             messages[MessageKey.Matched] = "已匹配-{0}-{1}";
             messages[MessageKey.MatchedInKeysFile] = "已匹配-{0}-{1}-{2}.{3}";
             messages[MessageKey.Miss] = "不相同-{0}";
@@ -174,11 +182,16 @@ namespace FileKEY
             messages[MessageKey.SaveCurrentOptions] = "存储当前配置";
             messages[MessageKey.PleaseEnterTheConfigurationFileName] = "请输入配置文件名：";
 
+            messages[MessageKey.Set] = "应用";
+            messages[MessageKey.Del] = "删除";
         }
 
         public static string GetMessage(MessageKey message, params Object[]? formatArgs)
         {
             var msg = messages[message];
+
+            if (string.IsNullOrEmpty(msg))
+                msg = message.ToString();
 
             if (formatArgs is not null && formatArgs.Length > 0)
                 msg = string.Format(msg, formatArgs);
