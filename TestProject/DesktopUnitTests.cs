@@ -49,6 +49,15 @@ namespace TestProject
         [Fact]
         public void LoadTestLanguage()
         {
+            var languageFile = Path.Combine(AppOption.GetConfigRootPath("Language"), "language_test.txt");
+            if (!File.Exists(languageFile) && File.Exists("language_test.txt"))
+                File.Copy("language_test.txt", languageFile);
+
+            Assert.True(File.Exists("language_test.txt"));
+            Assert.True(File.Exists(languageFile));
+
+            File.Delete("language_test.txt");
+            Assert.False(File.Exists("language_test.txt"));
 
             var args = new List<string>
             {
@@ -58,6 +67,9 @@ namespace TestProject
             AppOption.SetOptions(args.ToArray());
 
             Assert.Equal("*Test end*", Language.GetMessage(Language.MessageKey.End));
+
+            File.Delete(languageFile);
+            Assert.False(File.Exists(languageFile));
 
         }
 

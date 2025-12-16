@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿using System.Text;
 using static FileKEY.Language;
 
 namespace FileKEY
@@ -377,25 +377,25 @@ namespace FileKEY
             return outOptions;
         }
 
-        private static void setOption(List<string> options, bool isDelete, params string[] newOptions)
+        private static void setOption(List<string> options, bool isDelete, params string[] newOption)
         {
 
             if (isDelete)
             {
-                var oldOptionsIndex = options.IndexOf(newOptions[0]);
-                if (oldOptionsIndex >= 0)
+                var oldOptionIndex = options.IndexOf(newOption[0]);
+                if (oldOptionIndex >= 0)
                 {
-                    for (var i = 0; i < newOptions.Length; i++)
+                    for (var i = 0; i < newOption.Length; i++)
                     {
-                        if (options.Count() > oldOptionsIndex)
+                        if (options.Count() > oldOptionIndex)
                         {
-                            options.RemoveAt(oldOptionsIndex);
+                            options.RemoveAt(oldOptionIndex);
                         }
                     }
                 }
             }
 
-            options.AddRange(newOptions);
+            options.AddRange(newOption);
 
         }
 
@@ -411,10 +411,12 @@ namespace FileKEY
                 GetMessage(MessageKey.MenuTitle),
                 GetMessage(MessageKey.MenuSetPath),//1
                 GetMessage(MessageKey.MenuSetKey),//2
-                GetMessage(MessageKey.MenuSetOptions),//3
-                GetMessage(MessageKey.MenuShowOptions),//4
-                GetMessage(MessageKey.MenuShowHelp),//5
-                GetMessage(MessageKey.MenuReSet),//6
+                GetMessage(MessageKey.MenuSetOtherOptions),//3
+                GetMessage(MessageKey.MenuConfigFiles),//4
+                GetMessage(MessageKey.MenuShowOptions),//5
+                GetMessage(MessageKey.MenuShowHelp),//6
+                GetMessage(MessageKey.MenuReSet),//7
+                "Language",//8
                 GetMessage(MessageKey.MenuRun),
             };
             var menuSelected = menuOptions.Count() - 1;
@@ -432,24 +434,25 @@ namespace FileKEY
                         showMenuKeyOptions(options);
                         break;
                     case 3:
-                        showMenuOptions(options);
+                        showMenuOtherOptions(options);
                         break;
                     case 4:
-                        if (options.Count == 0)
-                            Message.Write("None");
-
-                        foreach (var option in options)
-                        {
-                            Message.WriteLine(option);
-                        }
-                        Message.Wait();
+                        showMenuConfigFilesOptions(options);
                         break;
                     case 5:
-                        Message.WriteLine(Language.GetHelpShown());
+                        Message.WriteLine(getOptionsString(options));
                         Message.Wait();
                         break;
                     case 6:
+                        Message.WriteLine(GetHelpShown());
+                        Message.Wait();
+                        break;
+                    case 7:
                         options.Clear();
+                        Initialize();
+                        break;
+                    case 8:
+                        showMenuLanguageOptions();
                         break;
                 }
             } while (menuSelected < menuOptions.Count() - 1);
@@ -458,12 +461,162 @@ namespace FileKEY
 
         }
 
-        private static void showMenuOptions(List<string> options)
+        private static void showMenuLanguageOptions()
+        {
+            var languageSelected = 0;
+            var menuOptions = new string[] { };
+            do
+            {
+                var languageFiles = Directory.GetFiles(GetConfigRootPath("Language"), "Language_*.txt");
+
+                menuOptions = [
+                    "Language",
+                    GetMessage(MessageKey.SaveCurrentOptions),//1
+                    "en-US",//2
+                    "zh-CN",//3
+                    .. languageFiles.Select(p => Path.GetFileNameWithoutExtension(p).Replace("Language_","")),//4
+                    GetMessage(MessageKey.MenuClose),
+                ];
+                languageSelected = Message.ShowSelectMenu(languageSelected, menuOptions);
+                switch (languageSelected)
+                {
+                    case 1:
+                        var language = GetMessageAll();
+
+                        var configFileName = Message.ReadString(GetMessage(MessageKey.PleaseEnterTheConfigurationFileName));
+                        if (!string.IsNullOrEmpty(configFileName))
+                        {
+                            if (!configFileName.StartsWith("Language_"))
+                            {
+                                configFileName = "Language_" + configFileName;
+                            }
+                            if (!configFileName.EndsWith(".txt"))
+                            {
+                                configFileName += ".txt";
+                            }
+                            configFileName = Path.Combine(GetConfigRootPath("Language"), configFileName);
+
+                            for (var i = 0; i < language.Count; i++)
+                            {
+                                Message.Write($"{i + 1}/{language.Count} {language[i]}");
+                                var value = Message.ReadString("=");
+
+                                if (!string.IsNullOrEmpty(value))
+                                {
+                                    language[i] = language[i].Split('=')[0] + "=" + value;
+                                }
+                            }
+
+                            File.WriteAllLines(configFileName, language);
+
+                            Message.WriteLine(configFileName);
+                            Message.Wait();
+                        }
+                        break;
+                    case 2:
+                        Initialize("en");
+                        break;
+                    case 3:
+                        Initialize("zh");
+                        break;
+                    default:
+                        if (languageSelected < menuOptions.Count() - 1)
+                        {
+                            Initialize(Path.GetFileNameWithoutExtension(languageFiles[languageSelected - 4]).Replace("Language_", ""));
+                        }
+                        break;
+                }
+            } while (languageSelected < menuOptions.Count() - 1);
+
+        }
+
+        private static string getOptionsString(List<string> options)
+        {
+            var optionsString = new StringBuilder();
+
+            if (options.Count == 0)
+                optionsString.AppendLine("None");
+
+            foreach (var option in options)
+            {
+                optionsString.AppendLine(option);
+            }
+
+            return optionsString.ToString();
+        }
+
+        public static string GetConfigRootPath(string confitType)
+        {
+            if (string.IsNullOrEmpty(confitType))
+            {
+                confitType = "Default";
+            }
+
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var configRootPath = Path.Combine(appDataPath, "FileKEY", confitType);
+            if (!Directory.Exists(configRootPath))
+            {
+                Directory.CreateDirectory(configRootPath);
+            }
+
+            return configRootPath;
+        }
+
+        private static void showMenuConfigFilesOptions(List<string> options)
+        {
+
+            var configSelected = 0;
+            var menuOptions = new string[] { };
+
+            do
+            {
+                var configFiles = Directory.GetFiles(GetConfigRootPath("Option"), "*.txt");
+
+                menuOptions = [
+                    GetMessage(MessageKey.MenuConfigFiles),
+                    GetMessage(MessageKey.SaveCurrentOptions),//1
+                    .. configFiles.Select(p => Path.Combine("Option", Path.GetFileName(p))),//2
+                    GetMessage(MessageKey.MenuClose),
+                ];
+
+                configSelected = Message.ShowSelectMenu(configSelected, menuOptions);
+
+                if (configSelected == 1)
+                {
+                    Message.WriteLine(getOptionsString(options));
+
+                    var configFileName = Message.ReadString(GetMessage(MessageKey.PleaseEnterTheConfigurationFileName));
+                    if (!string.IsNullOrEmpty(configFileName))
+                    {
+                        if (!configFileName.EndsWith(".txt"))
+                        {
+                            configFileName += ".txt";
+                        }
+                        File.WriteAllLines(Path.Combine(GetConfigRootPath("Option"), configFileName), options);
+                    }
+                }
+                else if (configSelected < menuOptions.Count() - 1)
+                {
+                    var configFilePath = configFiles[configSelected - 2];
+                    var configFileOptions = File.ReadAllLines(configFilePath);
+                    options.Clear();
+                    options.AddRange(configFileOptions);
+
+                    Message.WriteLine(getOptionsString(options));
+                    Message.Wait();
+
+                }
+
+            } while (configSelected < menuOptions.Count() - 1);
+
+        }
+
+        private static void showMenuOtherOptions(List<string> options)
         {
             var optionSelected = 0;
             var menuOptions = new string[]
             {
-                GetMessage(MessageKey.MenuSetOptions),
+                GetMessage(MessageKey.MenuSetOtherOptions),
                 "Equals",//1
                 "GroupBy",//2
                 "GroupMinCount",//3
@@ -652,7 +805,7 @@ namespace FileKEY
 
         private static void showMenuGroupMinCountOptions(List<string> options)
         {
-            var groupMinCount = "0";
+            var groupMinCount = "1";
             var fromMenuIndex = options.IndexOf("--GroupMinCount");
             if (fromMenuIndex >= 0)
             {
@@ -667,7 +820,7 @@ namespace FileKEY
 
             var isNum = int.TryParse(groupMinCount, out outNum);
 
-            if (isNum && outNum > 0)
+            if (isNum && outNum > 1)
             {
                 options.Add("--GroupMinCount");
                 options.Add(outNum.ToString());

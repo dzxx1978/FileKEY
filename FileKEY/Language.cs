@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 
 namespace FileKEY
 {
@@ -73,13 +74,16 @@ namespace FileKEY
             MenuTitle,
             MenuSetPath,
             MenuSetKey,
-            MenuSetOptions,
+            MenuSetOtherOptions,
+            MenuConfigFiles,
             MenuShowOptions,
             MenuShowHelp,
             MenuRun,
             MenuClose,
             MenuReSet,
             MenuSelected,
+            SaveCurrentOptions,
+            PleaseEnterTheConfigurationFileName,
         }
 
         private static void Initialize_en()
@@ -113,13 +117,17 @@ namespace FileKEY
             messages[MessageKey.MenuTitle] = "FileKey Menu";
             messages[MessageKey.MenuSetPath] = "Set file or directory path";
             messages[MessageKey.MenuSetKey] = "Set matching key value";
-            messages[MessageKey.MenuSetOptions] = "Set other options";
+            messages[MessageKey.MenuSetOtherOptions] = "Set other options";
+            messages[MessageKey.MenuConfigFiles] = "Configuration file";
             messages[MessageKey.MenuShowOptions] = "Show options";
             messages[MessageKey.MenuShowHelp] = "Help";
             messages[MessageKey.MenuRun] = "Run";
             messages[MessageKey.MenuRun] = "Close";
             messages[MessageKey.MenuReSet] = "Reset";
             messages[MessageKey.MenuSelected] = "Please select the menu and press Enter to confirm!{0}";
+
+            messages[MessageKey.SaveCurrentOptions] = "Save current options";
+            messages[MessageKey.PleaseEnterTheConfigurationFileName] = "Please enter the configuration file name:";
 
         }
 
@@ -154,13 +162,18 @@ namespace FileKEY
             messages[MessageKey.MenuTitle] = "FileKey菜单";
             messages[MessageKey.MenuSetPath] = "设置文件或文件夹路径";
             messages[MessageKey.MenuSetKey] = "设置匹配Key值";
-            messages[MessageKey.MenuSetOptions] = "设置其他选项";
+            messages[MessageKey.MenuSetOtherOptions] = "设置其他选项";
+            messages[MessageKey.MenuConfigFiles] = "读写配置文件";
             messages[MessageKey.MenuShowOptions] = "显示已设置的选项";
             messages[MessageKey.MenuShowHelp] = "帮助";
             messages[MessageKey.MenuRun] = "开始";
             messages[MessageKey.MenuClose] = "关闭";
             messages[MessageKey.MenuReSet] = "重置";
             messages[MessageKey.MenuSelected] = "请选择菜单，并按回车键确认！{0}";
+
+            messages[MessageKey.SaveCurrentOptions] = "存储当前配置";
+            messages[MessageKey.PleaseEnterTheConfigurationFileName] = "请输入配置文件名：";
+
         }
 
         public static string GetMessage(MessageKey message, params Object[]? formatArgs)
@@ -187,12 +200,24 @@ FileKEY [path] [key] [-0tcms]
 ";
         }
 
+        public static List<string> GetMessageAll()
+        {
+            var allMsg =new List<string>();
+            foreach (var msg in messages)
+            {
+                allMsg.Add($"{msg.Key}={msg.Value}{Environment.NewLine}");
+            }
+            return allMsg;
+        }
+
         private static void LoadLanguage(string language)
         {
-            if (File.Exists($"language_{language}.txt"))
+            var languageFile = Path.Combine(AppOption.GetConfigRootPath("Language"), $"language_{language}.txt");
+
+            if (File.Exists(languageFile))
             {
                 messages.Clear();
-                using (StreamReader reader = new StreamReader($"language_{language}.txt"))
+                using (StreamReader reader = new StreamReader(languageFile))
                 {
                     string? line;
                     while ((line = reader.ReadLine()) != null)
