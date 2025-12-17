@@ -225,7 +225,7 @@ FileKEY [path] [key] [-0tcms]
 ";
         }
 
-        public static List<string> GetMessageAll()
+        public static List<string> GetMessages()
         {
             var allMsg = new List<string>();
             foreach (var msg in messages)
@@ -233,25 +233,6 @@ FileKEY [path] [key] [-0tcms]
                 allMsg.Add($"{msg.Key}={msg.Value}{Environment.NewLine}");
             }
             return allMsg;
-        }
-
-        public static List<string> EditMessage()
-        {
-
-            var language = GetMessageAll();
-
-            for (var i = 0; i < language.Count; i++)
-            {
-                Message.Write($"{i + 1}/{language.Count} {language[i]}");
-                var readLanguage = Message.ReadString("=");
-
-                if (!string.IsNullOrEmpty(readLanguage))
-                {
-                    language[i] = language[i].Split('=')[0] + "=" + readLanguage;
-                }
-            }
-
-            return language;
         }
 
         private static void LoadLanguage(string language)

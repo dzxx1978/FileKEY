@@ -4,16 +4,17 @@ namespace TestProject
 {
     public class DesktopUnitTests : IDisposable
     {
-        private const string imageCatFileTypeValue = "PNG(png);";
-        private const string imageCatFileCrcKey = "27E9D872";
-        private const string imageCatFileMd5Key = "d9ca43935c9663dccecf8c0951cf1ec2";
-        private const string imageCatFileSha256Key = "de566fbbf3033a30bb72cfd068b932d335d04b56212c78bd8fd87a7c8804819f";
+        private string imageCatFileTypeValue => "PNG(png);";
+        private string imageCatFileCrcKey => "27E9D872";
+        private string imageCatFileMd5Key => "d9ca43935c9663dccecf8c0951cf1ec2";
+        private string imageCatFileSha256Key => "de566fbbf3033a30bb72cfd068b932d335d04b56212c78bd8fd87a7c8804819f";
 
-        private const string imageDogFileTypeValue = "JPEG(jpg);";
-        private const string imageDogFileSha256Key = "4a13733b1f6b9e0a16a58aef2fe54db59154eb335da590ef1894eac8c1e16628";
+        private string imageDogFileTypeValue => "JPEG(jpg);";
+        private string imageDogFileSha256Key => "4a13733b1f6b9e0a16a58aef2fe54db59154eb335da590ef1894eac8c1e16628";
 
-        private readonly string imageDogPath = Path.Combine("TestFile", "image-dog.jpg");
-        private readonly string imageCatPath = Path.Combine("TestFile", "image-cat.png");
+        private string testFileDir => "TestFile";
+        private string imageDogPath => Path.Combine(testFileDir, "image-dog.jpg");
+        private string imageCatPath => Path.Combine(testFileDir, "image-cat.png");
 
         StringWriter writer;
         public DesktopUnitTests()
@@ -52,7 +53,7 @@ namespace TestProject
         {
             var args = new List<string>
             {
-                "-v"
+                AppOption.Command_v
             };
 
             var output = await TestRunAsync(args.ToArray());
@@ -78,7 +79,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                "--Language",
+                AppOption.Command_Language,
                 "test"
             };
             AppOption.SetOptions(args.ToArray());
@@ -98,7 +99,7 @@ namespace TestProject
             var args = new List<string>
             {
                 imageCatPath,
-                "-t"
+                AppOption.Command_t
             };
 
             AppOption.SetOptions(args.ToArray());
@@ -123,7 +124,7 @@ namespace TestProject
             var args = new List<string>
             {
                 imageCatPath,
-                "-c"
+                AppOption.Command_c
             };
 
             AppOption.SetOptions(args.ToArray());
@@ -148,7 +149,7 @@ namespace TestProject
             var args = new List<string>
             {
                 imageCatPath,
-                "-m"
+                AppOption.Command_m
             };
 
             AppOption.SetOptions(args.ToArray());
@@ -173,7 +174,7 @@ namespace TestProject
             var args = new List<string>
             {
                 imageCatPath,
-                "-s"
+                AppOption.Command_s
             };
 
             AppOption.SetOptions(args.ToArray());
@@ -337,7 +338,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                "TestFile"
+                testFileDir
             };
 
             AppOption.SetOptions(args.ToArray());
@@ -363,7 +364,7 @@ namespace TestProject
 
             var args = new List<string>
             {
-                "TestFile",
+                testFileDir,
                  imageDogFileSha256Key,
                 "-0s"
            };
@@ -388,12 +389,12 @@ namespace TestProject
         {
             var args = new List<string>
             {
-                "TestFile",
+                testFileDir,
                  imageCatFileSha256Key,
                 "-0s"
            };
 
-            var outOptions = AppOption.SetOptions(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
 
             await new Desktop().GanHuoer();
 
@@ -414,13 +415,14 @@ namespace TestProject
 
             var args = new List<string>
             {
-                "TestFile",
+                testFileDir,
                 "imageKeys.txt",
                 "-0s"
             };
 
-            var outOptions = AppOption.SetOptions(args.ToArray());
-            Assert.True(outOptions.Count() == 2);
+            AppOption.SetOptions(args.ToArray());
+            var outOptions= AppOption.GetOptions();
+            Assert.True(outOptions.Count() == 6);
 
             await new Desktop().GanHuoer();
 
@@ -439,14 +441,15 @@ namespace TestProject
 
             var args = new List<string>
             {
-                "--Directory",
-                "TestFile",
-                "--Equals",
+                AppOption.Command_Directory,
+                testFileDir,
+                AppOption.Command_Equals,
                 imageDogPath,
                 "-0s"
             };
 
-            var outOptions = AppOption.SetOptions(args.ToArray());
+            AppOption.SetOptions(args.ToArray());
+            var outOptions = AppOption.GetOptions();
             Assert.True(outOptions.Count() == 6);
 
             await new Desktop().GanHuoer();
@@ -468,18 +471,19 @@ namespace TestProject
 
             var args = new List<string>
             {
-                "--Directory",
-                "TestFile",
-                "--SubDirectory",
+                AppOption.Command_Directory,
+                testFileDir,
+                AppOption.Command_SubDirectory,
                 "1",
-                "--GroupBy",
+                AppOption.Command_GroupBy,
                 "type",
-                "--GroupMinCount",
+                AppOption.Command_GroupMinCount,
                 "3"
             };
 
-            var outOptions = AppOption.SetOptions(args.ToArray());
-            Assert.True(outOptions.Count() == 8);
+            AppOption.SetOptions(args.ToArray());
+            var outOptions = AppOption.GetOptions();
+            Assert.True(outOptions.Count() == 9);
 
             await new Desktop().GanHuoer();
 

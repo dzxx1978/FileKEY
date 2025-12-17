@@ -2,7 +2,7 @@
 
 try
 {
-    AppOption.ShowMenu(args.ToList());
+    new MenuConfig().ShowMenu(args);
 }
 catch (Exception ex)
 {
