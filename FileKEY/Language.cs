@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using static FileKEY.ConfigFile;
 
 namespace FileKEY
 {
@@ -46,7 +47,8 @@ namespace FileKEY
             Initialize();
         }
 
-        private static void messagesClear() {
+        private static void messagesClear()
+        {
 
             messages.Clear();
             foreach (MessageKey msg in Enum.GetValues(typeof(MessageKey)))
@@ -233,24 +235,42 @@ FileKEY [path] [key] [-0tcms]
             return allMsg;
         }
 
+        public static List<string> EditMessage()
+        {
+
+            var language = GetMessageAll();
+
+            for (var i = 0; i < language.Count; i++)
+            {
+                Message.Write($"{i + 1}/{language.Count} {language[i]}");
+                var readLanguage = Message.ReadString("=");
+
+                if (!string.IsNullOrEmpty(readLanguage))
+                {
+                    language[i] = language[i].Split('=')[0] + "=" + readLanguage;
+                }
+            }
+
+            return language;
+        }
+
         private static void LoadLanguage(string language)
         {
-            var configType = AppOption.ConfigType.Language.ToString();
-            var languageFile = Path.Combine(AppOption.GetConfigRootPath(configType), $"{configType}_{language}.txt");
+            var configFilePath = GetConfigFilePath(ConfigType.Language, language);
+            var lines = LoadConfigFile(configFilePath);
 
-            if (File.Exists(languageFile))
+            if (lines.Length > 0)
             {
                 messagesClear();
-                using (StreamReader reader = new StreamReader(languageFile))
+
+                foreach (var line in lines)
                 {
-                    string? line;
-                    while ((line = reader.ReadLine()) != null)
+                    if (string.IsNullOrEmpty(line)) continue;
+
+                    var item = line.Split('=');
+                    if (item.Length == 2)
                     {
-                        var item = line.Split('=');
-                        if (item.Length == 2)
-                        {
-                            messages[Enum.Parse<MessageKey>(item[0])] = item[1];
-                        }
+                        messages[Enum.Parse<MessageKey>(item[0])] = item[1];
                     }
                 }
             }
@@ -261,7 +281,7 @@ FileKEY [path] [key] [-0tcms]
                 {
                     Message.WriteLine($"{msg.Key}={msg.Value}");
                 }
-                throw new Exception($"Could not find the corresponding {configType}_{language}.txt file for the language. Please create your own using the on-screen text style.");
+                throw new Exception($"Could not find the corresponding {Path.GetFileName(configFilePath)} file for the language. Please create your own using the on-screen text style.");
             }
         }
     }

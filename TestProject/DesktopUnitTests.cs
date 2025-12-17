@@ -64,16 +64,17 @@ namespace TestProject
         [Fact]
         public void LoadTestLanguage()
         {
-            var configType = AppOption.ConfigType.Language.ToString();
-            var languageFile = Path.Combine(AppOption.GetConfigRootPath(configType), $"{configType}_test.txt");
-            if (!File.Exists(languageFile) && File.Exists($"{configType}_test.txt"))
-                File.Copy($"{configType}_test.txt", languageFile);
+            var languageFile = ConfigFile.GetConfigFilePath(ConfigFile.ConfigType.Language, "test");
+            var testLanguageFile = Path.GetFileName(languageFile);
 
-            Assert.True(File.Exists($"{configType}_test.txt"));
+            if (!File.Exists(languageFile) && File.Exists(testLanguageFile))
+                File.Copy(testLanguageFile, languageFile);
+
+            Assert.True(File.Exists(testLanguageFile));
             Assert.True(File.Exists(languageFile));
 
-            File.Delete($"{configType}_test.txt");
-            Assert.False(File.Exists($"{configType}_test.txt"));
+            File.Delete(testLanguageFile);
+            Assert.False(File.Exists(testLanguageFile));
 
             var args = new List<string>
             {
