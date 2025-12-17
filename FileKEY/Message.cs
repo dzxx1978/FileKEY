@@ -238,9 +238,9 @@ public static class Message
     /// 等待按键输入（忽略调用前的按键缓存）
     /// </summary>
     /// <param name="message">提示文本内容</param>
-    /// <param name="key">等待的按键（NoName代表任何按键）</param>
+    /// <param name="consoleKeys">等待的按键（NoName代表任何按键）</param>
     /// <returns>按键信息</returns>
-    public static ConsoleKeyInfo Wait(string? message = null, ConsoleKey key = ConsoleKey.NoName)
+    public static ConsoleKeyInfo Wait(string? message = null, params ConsoleKey[] consoleKeys)
     {
         if (message is not null)
         {
@@ -253,9 +253,19 @@ public static class Message
             var inkey = Console.ReadKey(true);
             var t1 = DateTime.Now.Ticks / 100000;
 
-            if (t1 > t && (key == ConsoleKey.NoName || key == inkey.Key))
+            if (t1 > t)
             {
-                return inkey;
+                if (consoleKeys.Length == 0)
+                {
+                    return inkey;
+                }
+                foreach (var consoleKey in consoleKeys)
+                {
+                    if (consoleKey == ConsoleKey.NoName || consoleKey == inkey.Key)
+                    {
+                        return inkey;
+                    }
+                }
             }
         }
 
@@ -272,28 +282,28 @@ public static class Message
     {
         if (selected == itemNum)
         {
-            Write($"->{itemNum}:{itemString}", 1, top + itemNum, ConsoleColor.Red);
+            Write($" ->{itemNum}:{itemString}", 0, top + itemNum, ConsoleColor.Red);
         }
         else
         {
-            Write($"  {itemNum}:{itemString}", 1, top + itemNum, ConsoleColor.White);
+            Write($"   {itemNum}:{itemString}", 0, top + itemNum, ConsoleColor.White);
         }
     }
 
     /// <summary>
     /// 显示选择菜单（等待选择）
     /// </summary>
-    /// <param name="defaultNum">默认选中菜单项</param>
+    /// <param name="selected">默认选中菜单项</param>
     /// <param name="menus">菜单内容</param>
     /// <returns>被选中的菜单项</returns>
-    public static int ShowSelectMenu(int defaultNum, string[] menus)
+    public static int ShowSelectMenu(int selected, string[] menus)
     {
-        int select = defaultNum;
+        int select = selected;
         int maxNum = menus.Length - 1;
 
         if (select > maxNum) select = maxNum;
         if (select < 1) select = 1;
-        defaultNum = select;
+        selected = select;
 
         Clear();
         GetPos(out _, out var top);
@@ -305,8 +315,9 @@ public static class Message
         }
 
         WriteLine("");
+        Write(Language.GetMessage(Language.MessageKey.MenuSelected));
         GetPos(out var left, out var top1);
-        Write(Language.GetMessage(Language.MessageKey.MenuSelected, select));
+        Write(select.ToString());
 
         while (true)
         {
@@ -315,34 +326,42 @@ public static class Message
             {
                 break;
             }
-            else if (key.Key == ConsoleKey.DownArrow)
+            switch (key.Key)
             {
-                if (select < maxNum) select++;
-            }
-            else if (key.Key == ConsoleKey.UpArrow)
-            {
-                if (select > 1) select--;
-            }
-            else if (int.TryParse(key.KeyChar.ToString(), out int keyNum))
-            {
-                if (keyNum <= maxNum && keyNum >= 1)
-                {
-                    select = keyNum;
-                }
+                case ConsoleKey.DownArrow:
+                    if (select < maxNum) select++;
+                    break;
+                case ConsoleKey.UpArrow:
+                    if (select > 1) select--;
+                    break;
+                case ConsoleKey.PageDown:
+                    select = maxNum;
+                    break;
+                case ConsoleKey.PageUp:
+                    select = 1;
+                    break;
+                default:
+                    if (int.TryParse(key.KeyChar.ToString(), out int keyNum))
+                    {
+                        if (keyNum <= maxNum && keyNum >= 1)
+                        {
+                            select = keyNum;
+                        }
+                    }
+                    break;
             }
 
-            if (defaultNum != select)
+            if (selected != select)
             {
-                ShowOptionString(select, defaultNum, menus[defaultNum], top);
+                ShowOptionString(select, selected, menus[selected], top);
                 ShowOptionString(select, select, menus[select], top);
-                defaultNum = select;
-                SetPos(left, top1);
-                Write(Language.GetMessage(Language.MessageKey.MenuSelected, select));
+                selected = select;
+                Write(select.ToString(), left, top1);
             }
         }
 
         Clear();
-        WriteLine(menus[defaultNum]);
+        WriteLine(menus[selected]);
 
         return select;
     }

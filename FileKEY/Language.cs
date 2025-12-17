@@ -1,5 +1,5 @@
 ﻿using System.Globalization;
-using System.Text;
+using System.Text.RegularExpressions;
 
 namespace FileKEY
 {
@@ -24,9 +24,11 @@ namespace FileKEY
             switch (language)
             {
                 case "en":
+                case "en-US":
                     Initialize_en();
                     break;
                 case "zh":
+                case "zh-CN":
                     Initialize_zh();
                     break;
                 default:
@@ -40,12 +42,18 @@ namespace FileKEY
 
         static Language()
         {
-            foreach (Language.MessageKey msg in Enum.GetValues(typeof(Language.MessageKey)))
+            messagesClear();
+            Initialize();
+        }
+
+        private static void messagesClear() {
+
+            messages.Clear();
+            foreach (MessageKey msg in Enum.GetValues(typeof(MessageKey)))
             {
                 messages.Add(msg, "");
             }
 
-            Initialize();
         }
 
         public enum MessageKey
@@ -92,11 +100,13 @@ namespace FileKEY
             Display,
             Hash,
             All,
+            Language,
+            SaveToFile,
         }
 
         private static void Initialize_en()
         {
-
+            messagesClear();
             messages[MessageKey.End] = "*END*";
             messages[MessageKey.DisplayCompletedPressEnterToContinue] = "Display completed, press enter to continue.";
             messages[MessageKey.UnrecognizedParameters] = "Unrecognized parameters:{0}";
@@ -132,7 +142,7 @@ namespace FileKEY
             messages[MessageKey.MenuRun] = "Run";
             messages[MessageKey.MenuClose] = "Close";
             messages[MessageKey.MenuReSet] = "Reset";
-            messages[MessageKey.MenuSelected] = "Please select the menu and press Enter to confirm!{0}";
+            messages[MessageKey.MenuSelected] = "Please select the menu and press Enter to confirm!";
 
             messages[MessageKey.SaveCurrentOptions] = "Save current options";
             messages[MessageKey.PleaseEnterTheConfigurationFileName] = "Please enter the configuration file name:";
@@ -141,7 +151,7 @@ namespace FileKEY
 
         private static void Initialize_zh()
         {
-
+            messagesClear();
             messages[MessageKey.End] = "*结束*";
             messages[MessageKey.DisplayCompletedPressEnterToContinue] = "显示完毕，按回车继续下一个。";
             messages[MessageKey.UnrecognizedParameters] = "无法识别的参数：{0}";
@@ -177,7 +187,7 @@ namespace FileKEY
             messages[MessageKey.MenuRun] = "开始";
             messages[MessageKey.MenuClose] = "关闭";
             messages[MessageKey.MenuReSet] = "重置";
-            messages[MessageKey.MenuSelected] = "请选择菜单，并按回车键确认！{0}";
+            messages[MessageKey.MenuSelected] = "请选择菜单，并按回车键确认！";
 
             messages[MessageKey.SaveCurrentOptions] = "存储当前配置";
             messages[MessageKey.PleaseEnterTheConfigurationFileName] = "请输入配置文件名：";
@@ -186,14 +196,14 @@ namespace FileKEY
             messages[MessageKey.Del] = "删除";
         }
 
-        public static string GetMessage(MessageKey message, params Object[]? formatArgs)
+        public static string GetMessage(MessageKey message, params Object[] formatArgs)
         {
             var msg = messages[message];
 
             if (string.IsNullOrEmpty(msg))
-                msg = message.ToString();
+                msg = Regex.Replace(message.ToString(), @"(?<!^)([A-Z])", " $1".ToLower());
 
-            if (formatArgs is not null && formatArgs.Length > 0)
+            if (formatArgs.Length > 0)
                 msg = string.Format(msg, formatArgs);
 
             return msg;
@@ -206,16 +216,16 @@ https://github.com/dzxx1978/FileKEY
 FileKEY {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString()} by zxx 2025
 FileKEY [path] [key] [-0tcms]
  -0 small print
- -t only {Language.Type}
- -c only {Language.Crc}
- -m only {Language.Md5}
- -s only {Language.Sha256}
+ -t only {Type}
+ -c only {Crc}
+ -m only {Md5}
+ -s only {Sha256}
 ";
         }
 
         public static List<string> GetMessageAll()
         {
-            var allMsg =new List<string>();
+            var allMsg = new List<string>();
             foreach (var msg in messages)
             {
                 allMsg.Add($"{msg.Key}={msg.Value}{Environment.NewLine}");
@@ -225,11 +235,12 @@ FileKEY [path] [key] [-0tcms]
 
         private static void LoadLanguage(string language)
         {
-            var languageFile = Path.Combine(AppOption.GetConfigRootPath("Language"), $"language_{language}.txt");
+            var configType = AppOption.ConfigType.Language.ToString();
+            var languageFile = Path.Combine(AppOption.GetConfigRootPath(configType), $"{configType}_{language}.txt");
 
             if (File.Exists(languageFile))
             {
-                messages.Clear();
+                messagesClear();
                 using (StreamReader reader = new StreamReader(languageFile))
                 {
                     string? line;
@@ -250,7 +261,7 @@ FileKEY [path] [key] [-0tcms]
                 {
                     Message.WriteLine($"{msg.Key}={msg.Value}");
                 }
-                throw new Exception($"Could not find the corresponding language_{language}.txt file for the language. Please create your own using the on-screen text style.");
+                throw new Exception($"Could not find the corresponding {configType}_{language}.txt file for the language. Please create your own using the on-screen text style.");
             }
         }
     }

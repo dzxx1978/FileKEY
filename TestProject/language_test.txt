@@ -1,4 +1,3 @@
-
 End=*Test end*
 DisplayCompletedPressEnterToContinue=Display completed, press enter to continue.
 UnrecognizedParameters=Unrecognized parameters:{0}
@@ -9,27 +8,4 @@ TheInputFilePathDoesNotExist=The input file path {0} does not exist
 PleaseEnterTheMinimumNumberOfGroupsToDisplay=Please enter the minimum number of members to be displayed in the group, Use default input ({0})£º
 PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored=Please enter the verification key value or the file path where the key value is stored:
 PleaseEnterTheNumberOfScannedSubdirectoriesAtDifferentLevels=Please enter the number of scanned subdirectories at different levels, Use default input ({0}):
-Wait=Wait >>
-ThereIsNoSuchFile=There is no such file!
-ProcessCompleted=Process completed
-Matched=matched-{0}-{1}
-MatchedInKeysFile=matched-{0}-{1}-{2}.{3}
-Miss=miss-{0}
-NoKeyTheLengthIs=NoKeyTheLengthIs({0})
-NoKeyInFile=NoKeyInFile({0})
-ParameterLanguageUsageErrorMissingLanguageCode=Parameter -Language usage error, missing language code.
-ParameterErrorMissingPath=Parameter -{0} usage error, missing {0} path.
-ParameterError=Parameter -{0} usage error, Lack of necessary values {1}.
-MenuTitle=FileKey Menu
-MenuSetPath=Set file or directory path
-MenuSetKey=Set matching key value
-MenuSetOtherOptions=Set other options
-MenuConfigFiles=Configuration file
-MenuShowOptions=Show options
-MenuShowHelp=Help
-MenuRun=Run
-MenuClose=Close
-MenuReSet=Reset
-MenuSelected=Please select the menu and press Enter to confirm!{0}
-SaveCurrentOptions=Save current options
-PleaseEnterTheConfigurationFileName=Please enter the configuration file name:
+

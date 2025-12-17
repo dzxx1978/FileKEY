@@ -28,6 +28,25 @@ namespace TestProject
             writer.Dispose();
         }
 
+        private async Task<string> TestRunAsync(string[] args)
+        {
+            var output = string.Empty;
+            try
+            {
+                AppOption.SetOptions(args);
+                await new Desktop().GanHuoer();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                output = writer.ToString();
+            }
+            return output;
+        }
+
         [Fact]
         public async Task HelpShownAndExit()
         {
@@ -36,11 +55,7 @@ namespace TestProject
                 "-v"
             };
 
-            AppOption.SetOptions(args.ToArray());
-
-            await new Desktop().GanHuoer();
-
-            var output = writer.ToString();
+            var output = await TestRunAsync(args.ToArray());
 
             Assert.Equal(Language.GetHelpShown(), output);
 
@@ -49,15 +64,16 @@ namespace TestProject
         [Fact]
         public void LoadTestLanguage()
         {
-            var languageFile = Path.Combine(AppOption.GetConfigRootPath("Language"), "language_test.txt");
-            if (!File.Exists(languageFile) && File.Exists("language_test.txt"))
-                File.Copy("language_test.txt", languageFile);
+            var configType = AppOption.ConfigType.Language.ToString();
+            var languageFile = Path.Combine(AppOption.GetConfigRootPath(configType), $"{configType}_test.txt");
+            if (!File.Exists(languageFile) && File.Exists($"{configType}_test.txt"))
+                File.Copy($"{configType}_test.txt", languageFile);
 
-            Assert.True(File.Exists("language_test.txt"));
+            Assert.True(File.Exists($"{configType}_test.txt"));
             Assert.True(File.Exists(languageFile));
 
-            File.Delete("language_test.txt");
-            Assert.False(File.Exists("language_test.txt"));
+            File.Delete($"{configType}_test.txt");
+            Assert.False(File.Exists($"{configType}_test.txt"));
 
             var args = new List<string>
             {
@@ -67,6 +83,7 @@ namespace TestProject
             AppOption.SetOptions(args.ToArray());
 
             Assert.Equal("*Test end*", Language.GetMessage(Language.MessageKey.End));
+            Assert.False(string.IsNullOrEmpty(Language.GetMessage(Language.MessageKey.Set)));
 
             File.Delete(languageFile);
             Assert.False(File.Exists(languageFile));
