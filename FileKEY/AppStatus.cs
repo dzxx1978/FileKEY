@@ -338,6 +338,8 @@ public static class AppStatus
         {
             for (var i = 0; i < options.Length; i++)
             {
+                if (string.IsNullOrEmpty(options[i])) continue;
+
                 if (options[i].Substring(0, 1) == "-")
                 {
                     var parameter = options[i];

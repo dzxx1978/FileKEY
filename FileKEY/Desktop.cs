@@ -326,7 +326,7 @@ public class Desktop
 
         if (AppStatus.IsTxtFileKeys)
         {
-            comparisonKeys = (await ConfigFile.LoadConfigFileAsync(comparisonKey)).ToList();
+            comparisonKeys =  ConfigFile.LoadConfigFile(comparisonKey).ToList();
         }
         else if (AppStatus.IsEqualsFile)
         {

@@ -13,7 +13,7 @@ public static class ConfigFile
     public enum ConfigType
     {
         Default,
-        Option,
+        Status,
         Language,
         Data,
     }
@@ -161,13 +161,13 @@ public static class ConfigFile
     /// </summary>
     /// <param name="configFilePath">配置文件完整路径</param>
     /// <returns></returns>
-    public static async Task<string[]> LoadConfigFileAsync(string configFilePath)
+    public static string[] LoadConfigFile(string configFilePath)
     {
         try
         {
             if (File.Exists(configFilePath))
             {
-                return await File.ReadAllLinesAsync(configFilePath);
+                return File.ReadAllLines(configFilePath);
             }
         }
         catch { }
@@ -186,6 +186,23 @@ public static class ConfigFile
             if (File.Exists(configFilePath))
             {
                 File.Delete(configFilePath);
+                return true;
+            }
+        }
+        catch { }
+        return false;
+    }
+
+    public static bool CopyToDefaultConfigFile(string configFilePath)
+    {
+        try
+        {
+            if (File.Exists(configFilePath))
+            {
+                var fileName = Path.GetFileNameWithoutExtension(configFilePath);
+                fileName = $"{ConfigType.Default.ToString()}_{fileName.Split('_')[0]}.txt";
+                var defaultFilePath = Path.Combine(GetConfigRootPath(ConfigType.Default.ToString()), fileName);
+                File.Copy(configFilePath, defaultFilePath, true);
                 return true;
             }
         }

@@ -19,7 +19,10 @@ public class MenuConfig
             if (AppStatus.IsHideMenu || AppStatus.IsHelpShownAndExit)
                 return;
         }
-
+        else
+        {
+            setDefaultConfig();
+        }
         options = AppStatus.GetOptions();
 
         var menuOptions = new string[] { };
@@ -52,7 +55,7 @@ public class MenuConfig
                     showMenuOtherOptions();
                     break;
                 case 4:
-                    await showMenuConfigFilesOptions();
+                    showMenuConfigFilesOptions();
                     break;
                 case 5:
                     Message.WriteLine(GetConfigString(options));
@@ -74,9 +77,60 @@ public class MenuConfig
     }
 
     /// <summary>
+    /// 编辑语言配置
+    /// </summary>
+    /// <returns></returns>
+    private bool showMenuEditLanguagesOptions()
+    {
+        var languages = GetLanguages();
+
+        var languageSelected = languages.Count + 1;
+        var menuOptions = new string[] { };
+        var configType = ConfigType.Language;
+
+        var configName = Message.ReadString(GetMessage(MessageEnum.PleaseEnterTheConfigurationFileName));
+        var configFilePath = GetConfigFilePath(configType, configName, ["en-US", "en", "zh-CN", "zh"]);
+
+        do
+        {
+            var languageFiles = GetConfigFiles(configType);
+
+            menuOptions = [
+                GetMessage(MessageEnum.Language),
+                .. languages,//1...
+                GetMessage(MessageEnum.SaveToFile),
+                GetMessage(MessageEnum.MenuClose),
+            ];
+            languageSelected = Message.ShowSelectMenu(languageSelected, menuOptions);
+
+            if (languageSelected <= languages.Count)
+            {
+                Message.Write($"{languageSelected}/{languages.Count} {languages[languageSelected - 1]}");
+                var readLanguage = Message.ReadString("=");
+
+                if (!string.IsNullOrEmpty(readLanguage))
+                {
+                    languages[languageSelected - 1] = $"{languages[languageSelected - 1].Split('=')[0]}={readLanguage}";
+                }
+            }
+            else {
+                Message.WriteLine(configFilePath);
+                var consoleKey = Message.Wait(GetMessage(MessageEnum.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
+                if (consoleKey.Key != ConsoleKey.Y)
+                    return false;
+
+                SaveConfigFile(configFilePath, languages.ToArray());
+
+                return true;
+            }
+        } while (languageSelected < menuOptions.Count() - 1);
+
+        return false;
+    }
+    /// <summary>
     /// 显示语言文字存盘读取编辑菜单
     /// </summary>
-    private void showMenuLanguageOptions()
+    private void showMenuLanguageFileOptions()
     {
         var languageSelected = 0;
         var menuOptions = new string[] { };
@@ -88,28 +142,18 @@ public class MenuConfig
 
             menuOptions = [
                 GetMessage(MessageEnum.Language),
-            GetMessage(MessageEnum.SaveCurrentOptions),//1
-            "en-US",//2
-            "zh-CN",//3
-            .. GetConfigFileNames(languageFiles),//4
-            GetMessage(MessageEnum.MenuClose),
-        ];
+                GetMessage(MessageEnum.SaveCurrentOptions),//1
+                "en-US",//2
+                "zh-CN",//3
+                .. GetConfigFileNames(languageFiles),//4
+                GetMessage(MessageEnum.MenuClose),
+            ];
             languageSelected = Message.ShowSelectMenu(languageSelected, menuOptions);
 
             switch (languageSelected)
             {
                 case 1:
-
-                    var configName = Message.ReadString(GetMessage(MessageEnum.PleaseEnterTheConfigurationFileName));
-                    var configFilePath = GetConfigFilePath(configType, configName, ["en-US", "en", "zh-CN", "zh"]);
-
-                    var language = EditLanguages();
-                    Message.WriteLine(configFilePath);
-                    var consoleKey = Message.Wait(GetMessage(MessageEnum.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
-                    if (consoleKey.Key != ConsoleKey.Y)
-                        break;
-
-                    SaveConfigFile(configFilePath, language.ToArray());
+                    showMenuEditLanguagesOptions();
                     break;
                 case 2:
                 case 3:
@@ -121,9 +165,10 @@ public class MenuConfig
                         var selectedLanguageFilePath = languageFiles[languageSelected - 4];
 
                         var setOrDel = Message.ShowSelectMenu(0, [
-                                selectedLanguageFilePath,
+                            selectedLanguageFilePath,
                             GetMessage(MessageEnum.Set),//1
                             GetMessage(MessageEnum.Del),//2
+                            GetMessage(MessageEnum.Default),//3
                             GetMessage(MessageEnum.MenuClose),
                         ]);
 
@@ -135,6 +180,9 @@ public class MenuConfig
                             case 2:
                                 DeleteConfigFile(selectedLanguageFilePath);
                                 break;
+                            case 3:
+                                CopyToDefaultConfigFile(selectedLanguageFilePath);
+                                goto case 1;
                         }
 
                     }
@@ -145,15 +193,13 @@ public class MenuConfig
     }
 
     /// <summary>
-    /// 显示配置文件存盘读取菜单
+    /// 显示状态设置配置菜单
     /// </summary>
-    /// <returns></returns>
-    private async Task showMenuConfigFilesOptions()
-    {
+    private void showMenuStatusFileOptions() {
 
         var configSelected = 0;
         var menuOptions = new string[] { };
-        var configType = ConfigType.Option;
+        var configType = ConfigType.Status;
 
         do
         {
@@ -190,15 +236,16 @@ public class MenuConfig
                 var setOrDel = Message.ShowSelectMenu(0,
                     [
                         configFilePath,
-                    GetMessage(MessageEnum.Set),//1
-                    GetMessage(MessageEnum.Del),//2
-                    GetMessage(MessageEnum.MenuClose),
-                ]);
+                        GetMessage(MessageEnum.Set),//1
+                        GetMessage(MessageEnum.Del),//2
+                        GetMessage(MessageEnum.Default),//3
+                        GetMessage(MessageEnum.MenuClose),
+                    ]);
 
                 switch (setOrDel)
                 {
                     case 1:
-                        options = (await LoadConfigFileAsync(configFilePath)).ToList();
+                        options = LoadConfigFile(configFilePath).ToList();
 
                         Message.WriteLine(GetConfigString(options));
                         Message.Wait();
@@ -206,11 +253,97 @@ public class MenuConfig
                     case 2:
                         DeleteConfigFile(configFilePath);
                         break;
+                    case 3:
+                        CopyToDefaultConfigFile(configFilePath);
+                        break;
                 }
 
             }
 
         } while (configSelected < menuOptions.Count() - 1);
+
+    }
+
+    /// <summary>
+    /// 显示默认设置配置菜单
+    /// </summary>
+    private void showMenuDefaultFileOptions()
+    {
+
+        var configSelected = 0;
+        var menuOptions = new string[] { };
+        var configType = ConfigType.Default;
+
+        do
+        {
+            var configFiles = GetConfigFiles(configType);
+
+            menuOptions = [
+                GetMessage(MessageEnum.MenuConfigFiles),
+                .. GetConfigFileNames(configFiles),//1
+                GetMessage(MessageEnum.MenuClose),
+            ];
+
+            configSelected = Message.ShowSelectMenu(configSelected, menuOptions);
+
+            if (configSelected < menuOptions.Count() - 1)
+            {
+                var configFilePath = configFiles[configSelected - 1];
+
+                var setOrDel = Message.ShowSelectMenu(0,
+                    [
+                        configFilePath,
+                        GetMessage(MessageEnum.Del),//1
+                        GetMessage(MessageEnum.MenuClose),
+                    ]);
+
+                switch (setOrDel)
+                {
+                    case 1:
+                        DeleteConfigFile(configFilePath);
+                        break;
+                }
+
+            }
+
+        } while (configSelected < menuOptions.Count() - 1);
+
+    }
+
+    /// <summary>
+    /// 显示配置文件存盘读取菜单
+    /// </summary>
+    /// <returns></returns>
+    private void showMenuConfigFilesOptions()
+    {
+        var optionSelected = 0;
+        var menuOptions = new string[] { };
+
+        do
+        {
+            menuOptions = [
+                GetMessage(MessageEnum.MenuSetOtherOptions),
+                GetMessage(MessageEnum.Status),//1
+                GetMessage(MessageEnum.Language),//2
+                GetMessage(MessageEnum.Default),//3
+                GetMessage(MessageEnum.MenuClose),
+            ];
+            optionSelected = Message.ShowSelectMenu(optionSelected, menuOptions);
+
+            switch (optionSelected)
+            {
+                case 1:
+                    showMenuStatusFileOptions();
+                    break;
+                case 2:
+                    showMenuLanguageFileOptions();
+                    break;
+                case 3:
+                    showMenuDefaultFileOptions();
+                    break;
+            }
+
+        } while (optionSelected < menuOptions.Count() - 1);
 
     }
 
@@ -232,7 +365,6 @@ public class MenuConfig
                 AppStatus.Command_SubDirectory.Substring(2),//"SubDirectory",//4
                 GetMessage(MessageEnum.Hash),//5
                 GetMessage(MessageEnum.Display),//6
-                GetMessage(MessageEnum.Language),//7
                 GetMessage(MessageEnum.MenuClose),
             ];
             optionSelected = Message.ShowSelectMenu(optionSelected, menuOptions);
@@ -257,9 +389,6 @@ public class MenuConfig
                 case 6:
                     showMenuDisplayOptions();
                     break;
-                case 7:
-                    showMenuLanguageOptions();
-                    break;
             }
 
         } while (optionSelected < menuOptions.Count() - 1);
@@ -276,7 +405,7 @@ public class MenuConfig
 
         do
         {
-            var groupBy = optionsGet(AppStatus.Command_GroupBy);
+            var groupBy = optionsGet(AppStatus.Command_GroupBy, 2);
             if (string.IsNullOrEmpty(groupBy)) groupBy = AppStatus.CommandValue_Noth;
 
             menuOptions = [
@@ -295,13 +424,11 @@ public class MenuConfig
                     optionsRemove(AppStatus.Command_GroupBy, 2);
                     break;
                 case 2:
-                    options.Add(AppStatus.Command_GroupBy);
-                    options.Add(AppStatus.CommandValue_Type);
-                    goto case 1;
+                    optionsRemoveAndAdd(AppStatus.Command_GroupBy, AppStatus.CommandValue_Type);
+                    break;
                 case 3:
-                    options.Add(AppStatus.Command_GroupBy);
-                    options.Add(AppStatus.CommandValue_Hash);
-                    goto case 1;
+                    optionsRemoveAndAdd(AppStatus.Command_GroupBy, AppStatus.CommandValue_Hash);
+                    break;
             }
 
         } while (groupBySelected < menuOptions.Count() - 1);
@@ -554,24 +681,40 @@ public class MenuConfig
     }
 
     /// <summary>
-    /// 编辑语言配置
+    /// 移除旧项目并添加新项目
     /// </summary>
+    /// <param name="items"></param>
     /// <returns></returns>
-    private List<string> EditLanguages()
+    private bool optionsRemoveAndAdd(params string[] items)
     {
-        var languages = GetLanguages();
+        if (items is null || items.Length == 0) return false;
+        optionsRemove(items[0], items.Length);
 
-        for (var i = 0; i < languages.Count; i++)
+        foreach (var item in items)
         {
-            Message.Write($"{i + 1}/{languages.Count} {languages[i]}");
-            var readLanguage = Message.ReadString("=");
-
-            if (!string.IsNullOrEmpty(readLanguage))
-            {
-                languages[i] = $"{languages[i].Split('=')[0]}={readLanguage}";
-            }
+            options.Add(item);
         }
 
-        return languages;
+        return true;
+    }
+
+    private void setDefaultConfig()
+    {
+
+        var configFiles = GetConfigFiles(ConfigType.Default);
+
+        foreach (var configFile in configFiles)
+        {
+            if (Path.GetFileNameWithoutExtension(configFile).EndsWith(ConfigType.Status.ToString()))
+            {
+                options = LoadConfigFile(configFile).ToList();
+                AppStatus.SetOptions(options.ToArray());
+            }
+            else if (Path.GetFileNameWithoutExtension(configFile).EndsWith(ConfigType.Language.ToString()))
+            {
+                Initialize(GetConfigName(ConfigType.Default, configFile));
+            }
+
+        }
     }
 }
