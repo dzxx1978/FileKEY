@@ -2,7 +2,7 @@
 
 namespace FileKEY;
 
-public static class AppOption
+public static class AppStatus
 {
     private static int _outTypeOption;
     private static int _outCrcOption;
@@ -78,7 +78,7 @@ public static class AppOption
     /// <summary>
     /// 文件或目录的路径
     /// </summary>
-    public static string FileOrDirectoryPath { get; set; } = "";
+    public static string FileOrDirectoryPath { get; private set; } = "";
 
     /// <summary>
     /// 待比较的关键字或包含关键字的文本文件路径
@@ -103,7 +103,7 @@ public static class AppOption
     /// <summary>
     /// 是否显示详细信息
     /// </summary>
-    public static bool IsDetailedInfoShown { get; private set; }
+    public static bool IsDetailedDisplay { get; private set; }
 
     /// <summary>
     /// 是否显示帮助并退出
@@ -111,11 +111,56 @@ public static class AppOption
     public static bool IsHelpShownAndExit { get; private set; }
 
     /// <summary>
-    /// 是否是从命令行参数中获取的路径
+    /// 是否隐藏交互式界面
     /// </summary>
-    public static bool IsPathFromArgs { get; private set; }
+    public static bool IsHideMenu { get; private set; }
 
-    static AppOption()
+
+    public enum FileTypeEnum
+    {
+        File,
+        Directory,
+        Noth,
+    }
+
+    private static FileTypeEnum fileType { get; set; } = FileTypeEnum.Noth;
+
+    public enum KeyTypeEnum
+    {
+        Key,
+        FileKeys,
+        Equals,
+        Noth,
+    }
+
+    private static KeyTypeEnum keyType { get; set; } = KeyTypeEnum.Noth;
+
+    /// <summary>
+    /// 文件类型
+    /// </summary>
+    public static bool IsFile => fileType == FileTypeEnum.File;
+    /// <summary>
+    /// 文件类型
+    /// </summary>
+    public static bool IsDirectory => fileType == FileTypeEnum.Directory;
+
+    /// <summary>
+    /// 是否是字符串关键字
+    /// </summary>
+    public static bool IsStringKey => keyType == KeyTypeEnum.Key;
+
+    /// <summary>
+    /// 是否是文本文件关键字
+    /// </summary>
+    public static bool IsTxtFileKeys => keyType == KeyTypeEnum.FileKeys;
+
+    /// <summary>
+    /// 是否是比对文件
+    /// </summary>
+    public static bool IsEqualsFile => keyType == KeyTypeEnum.Equals;
+
+
+    static AppStatus()
     {
         initialize();
     }
@@ -127,16 +172,19 @@ public static class AppOption
         _outMd5Option = 1;
         _outSha256Option = 1;
 
+        fileType = FileTypeEnum.Noth;
         FileOrDirectoryPath = "";
+
+        keyType = KeyTypeEnum.Noth;
         ComparisonKey = "";
 
         GroupBy = "";
         SubDirectory = 0;
         GroupMinCount = 1;
 
-        IsDetailedInfoShown = true;
+        IsDetailedDisplay = true;
         IsHelpShownAndExit = false;
-        IsPathFromArgs = false;
+        IsHideMenu = false;
     }
 
     private enum Option
@@ -149,7 +197,7 @@ public static class AppOption
         _0,
         __File,
         __Directory,
-        __PathFromMenu,
+        __ShowMenu,
         __Key,
         __FileKeys,
         __Equals,
@@ -158,8 +206,9 @@ public static class AppOption
         __GroupMaxCount,
         __SubDirectory,
         __Language,
-        type,
-        hash,
+        Type,
+        Hash,
+        Noth,
     }
 
     private static string ToCommand(this Option option)
@@ -175,7 +224,7 @@ public static class AppOption
     public static string Command_0 => Option._0.ToCommand();
     public static string Command_File => Option.__File.ToCommand();
     public static string Command_Directory => Option.__Directory.ToCommand();
-    public static string Command_PathFromMenu => Option.__PathFromMenu.ToCommand();
+    public static string Command_ShowMenu => Option.__ShowMenu.ToCommand();
     public static string Command_Key => Option.__Key.ToCommand();
     public static string Command_FileKeys => Option.__FileKeys.ToCommand();
     public static string Command_Equals => Option.__Equals.ToCommand();
@@ -184,6 +233,9 @@ public static class AppOption
     public static string Command_SubDirectory => Option.__SubDirectory.ToCommand();
     public static string Command_Language => Option.__Language.ToCommand();
 
+    public static string CommandValue_Type => Option.Type.ToString();
+    public static string CommandValue_Hash => Option.Hash.ToString();
+    public static string CommandValue_Noth => Option.Noth.ToString();
 
     /// <summary>
     /// 转换配置到命令行参数列表
@@ -209,7 +261,7 @@ public static class AppOption
             options.Add(Command_s);
         }
 
-        if (!IsDetailedInfoShown)
+        if (!IsDetailedDisplay)
         {
             options.Add(Command_0);
         }
@@ -220,39 +272,36 @@ public static class AppOption
 
         if (!string.IsNullOrEmpty(FileOrDirectoryPath))
         {
-            if (File.Exists(FileOrDirectoryPath))
+            if (IsFile)
             {
                 options.Add(Command_File);
-                options.Add(FileOrDirectoryPath);
             }
-            else
+            else if (IsDirectory)
             {
                 options.Add(Command_Directory);
-                options.Add(FileOrDirectoryPath);
             }
-            if (!IsPathFromArgs)
+            options.Add(FileOrDirectoryPath);
+            if (!IsHideMenu)
             {
-                options.Add(Command_PathFromMenu);
+                options.Add(Command_ShowMenu);
             }
         }
 
         if (!string.IsNullOrEmpty(ComparisonKey))
         {
-            if (File.Exists(ComparisonKey))
+            if (IsTxtFileKeys)
             {
                 options.Add(Command_FileKeys);
-                options.Add(ComparisonKey);
             }
-            else if (Directory.Exists(ComparisonKey))
+            else if (IsEqualsFile)
             {
                 options.Add(Command_FileKeys);
-                options.Add(ComparisonKey);
             }
-            else
+            else if (IsStringKey)
             {
                 options.Add(Command_Key);
-                options.Add(ComparisonKey);
             }
+            options.Add(ComparisonKey);
         }
 
         if (IsGroup)
@@ -302,33 +351,26 @@ public static class AppOption
                         }
                         else
                         {
-                            throw new Exception(GetMessage(MessageKey.ParameterLanguageUsageErrorMissingLanguageCode));
+                            throw new Exception(GetMessage(MessageEnum.ParameterLanguageUsageErrorMissingLanguageCode));
                         }
 
                     }
                     else if (parameter == Command_File)
                     {
                         i++;
-                        if (i >= options.Length || !File.Exists(options[i]) || IsPathFromArgs)
+                        if (i >= options.Length || fileType != FileTypeEnum.Noth || !SetFileOrDirectoryPath(options[i], FileTypeEnum.File))
                         {
-                            throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                            throw new Exception(GetMessage(MessageEnum.ParameterErrorMissingPath, parameter.Substring(1)));
                         }
-
-                        IsPathFromArgs = true;
-                        FileOrDirectoryPath = options[i];
 
                     }
                     else if (parameter == Command_Directory)
                     {
-
                         i++;
-                        if (i >= options.Length || !Directory.Exists(options[i]) || IsPathFromArgs)
+                        if (i >= options.Length || fileType != FileTypeEnum.Noth || !SetFileOrDirectoryPath(options[i], FileTypeEnum.Directory))
                         {
-                            throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                            throw new Exception(GetMessage(MessageEnum.ParameterErrorMissingPath, parameter.Substring(1)));
                         }
-
-                        IsPathFromArgs = true;
-                        FileOrDirectoryPath = options[i];
 
                     }
                     else if (parameter == Command_SubDirectory)
@@ -337,7 +379,7 @@ public static class AppOption
                         i++;
                         if (i >= options.Length || !int.TryParse(options[i], out int subDirectory))
                         {
-                            throw new Exception(GetMessage(MessageKey.ParameterError, parameter.Substring(1), "<1|2|3|...>"));
+                            throw new Exception(GetMessage(MessageEnum.ParameterError, parameter.Substring(1), "<1|2|3|...>"));
                         }
 
                         SubDirectory = subDirectory;
@@ -346,15 +388,9 @@ public static class AppOption
                     else if (parameter == Command_FileKeys)
                     {
                         i++;
-                        if (i >= options.Length || !File.Exists(options[i]))
+                        if (i >= options.Length || !SetComparisonKey(options[i], KeyTypeEnum.FileKeys))
                         {
-                            throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
-                        }
-
-                        if (string.IsNullOrEmpty(GroupBy))
-                        {
-                            ComparisonKey = options[i];
-
+                            throw new Exception(GetMessage(MessageEnum.ParameterErrorMissingPath, parameter.Substring(1)));
                         }
 
                     }
@@ -362,39 +398,30 @@ public static class AppOption
                     {
 
                         i++;
-                        if (i >= options.Length || Directory.Exists(options[i]))
+                        if (i >= options.Length || !SetComparisonKey(options[i], KeyTypeEnum.Key))
                         {
-                            throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
-                        }
-
-                        if (string.IsNullOrEmpty(GroupBy))
-                        {
-                            ComparisonKey = options[i];
+                            throw new Exception(GetMessage(MessageEnum.ParameterErrorMissingPath, parameter.Substring(1)));
                         }
 
                     }
                     else if (parameter == Command_Equals)
                     {
                         i++;
-                        if (i >= options.Length || !File.Exists(options[i]))
+                        if (i >= options.Length || !SetComparisonKey(options[i], KeyTypeEnum.Equals))
                         {
-                            throw new Exception(GetMessage(MessageKey.ParameterErrorMissingPath, parameter.Substring(1)));
+                            throw new Exception(GetMessage(MessageEnum.ParameterErrorMissingPath, parameter.Substring(1)));
                         }
-                        if (!string.IsNullOrEmpty(GroupBy)) continue;
-
-                        var fileKey = new FileKey(false, false, false, true);
-                        ComparisonKey = fileKey.GetFileKeyInfo(options[i]).Result.Sha256Normalized;
 
                     }
                     else if (parameter == Command_GroupBy)
                     {
                         i++;
-                        if (i >= options.Length || options[i].ToLower() != Option.type.ToString() && options[i].ToLower() != Option.hash.ToString())
+                        if (i >= options.Length || !options[i].Equals(CommandValue_Type, StringComparison.OrdinalIgnoreCase) && !options[i].Equals(CommandValue_Hash, StringComparison.OrdinalIgnoreCase))
                         {
-                            throw new Exception(GetMessage(MessageKey.ParameterError, parameter.Substring(1), $"<{Option.type}|{Option.hash}>"));
+                            throw new Exception(GetMessage(MessageEnum.ParameterError, parameter.Substring(1), $"<{CommandValue_Type}|{CommandValue_Hash}>"));
                         }
 
-                        if (options[i].ToLower() == Option.type.ToString())
+                        if (options[i].Equals(CommandValue_Type, StringComparison.OrdinalIgnoreCase))
                         {
                             _outTypeOption = 1;
                             _outCrcOption = 0;
@@ -408,27 +435,25 @@ public static class AppOption
                             _outMd5Option = 0;
                             _outSha256Option = 1;
                         }
-                        IsDetailedInfoShown = false;
-                        ComparisonKey = "";
+                        IsDetailedDisplay = false;
+                        SetComparisonKey("");
                         GroupBy = options[i].ToLower();
 
                     }
                     else if (parameter == Command_GroupMinCount)
                     {
-
                         i++;
                         if (i >= options.Length || !int.TryParse(options[i], out int groupMinCount))
                         {
-                            throw new Exception(GetMessage(MessageKey.ParameterError, parameter.Substring(1), "<1|2|3|...>"));
+                            throw new Exception(GetMessage(MessageEnum.ParameterError, parameter.Substring(1), "<1|2|3|...>"));
                         }
 
                         GroupMinCount = groupMinCount;
 
                     }
-                    else if (parameter == Command_PathFromMenu)
+                    else if (parameter == Command_ShowMenu)
                     {
-
-                        IsPathFromArgs = false;
+                        IsHideMenu = false;
 
                     }
                     else
@@ -462,34 +487,100 @@ public static class AppOption
                         if (parameter.Contains(Command_0.Substring(1)))
                         {
                             parameter = parameter.Replace(Command_0.Substring(1), "");
-                            IsDetailedInfoShown = false;
+                            IsDetailedDisplay = false;
                         }
 
                         if (!string.IsNullOrEmpty(parameter))
                         {
-                            throw new Exception(GetMessage(MessageKey.UnrecognizedParameters, parameter));
+                            throw new Exception(GetMessage(MessageEnum.UnrecognizedParameters, parameter));
                         }
                     }
                 }
-                else if (string.IsNullOrEmpty(FileOrDirectoryPath))
+                else if (fileType == FileTypeEnum.Noth)
                 {
-                    IsPathFromArgs = true;
-                    FileOrDirectoryPath = options[i];
+                    SetFileOrDirectoryPath(options[i]);
                 }
-                else if (string.IsNullOrEmpty(ComparisonKey))
+                else if (keyType == KeyTypeEnum.Noth)
                 {
-                    if (string.IsNullOrEmpty(GroupBy))
-                        ComparisonKey = options[i];
+                    SetComparisonKey(options[i]);
                 }
                 else
                 {
-                    throw new Exception(GetMessage(MessageKey.TooManyParameters, options[i]));
+                    throw new Exception(GetMessage(MessageEnum.TooManyParameters, options[i]));
                 }
             }
 
         }
 
         return;
+    }
+
+    public static bool SetFileOrDirectoryPath(string path, FileTypeEnum setType = FileTypeEnum.Noth, bool setHideMenu = true)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            fileType = FileTypeEnum.Noth;
+            FileOrDirectoryPath = "";
+            return true;
+        }
+
+        if ((setType == FileTypeEnum.Noth || setType == FileTypeEnum.File) && File.Exists(path))
+        {
+            fileType = FileTypeEnum.File;
+        }
+        else if ((setType == FileTypeEnum.Noth || setType == FileTypeEnum.Directory) && Directory.Exists(path))
+        {
+            fileType = FileTypeEnum.Directory;
+        }
+        else
+        {
+            fileType = FileTypeEnum.Noth;
+            FileOrDirectoryPath = "";
+            throw new Exception(GetMessage(MessageEnum.UnrecognizedParameters, path));
+        }
+
+        if (setHideMenu) IsHideMenu = true;
+        FileOrDirectoryPath = path;
+        return true;
+    }
+
+    public static bool SetComparisonKey(string comparisonKey, KeyTypeEnum setType = KeyTypeEnum.Noth)
+    {
+        keyType = KeyTypeEnum.Noth;
+        ComparisonKey = "";
+        if (IsGroup || string.IsNullOrEmpty(comparisonKey)) return false;
+
+        if (setType == KeyTypeEnum.Key)
+        {
+            keyType = setType;
+        }
+        else
+        {
+            var isFile = File.Exists(comparisonKey);
+
+            if (setType == KeyTypeEnum.Noth)
+            {
+                if (isFile)
+                {
+                    keyType = KeyTypeEnum.FileKeys;
+                }
+                else
+                {
+                    keyType = KeyTypeEnum.Key;
+                }
+            }
+            else if (!isFile)
+            {
+                return false;
+            }
+            else
+            {
+                keyType = setType;
+            }
+        }
+
+        ComparisonKey = comparisonKey;
+        return true;
     }
 
 }

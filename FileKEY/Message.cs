@@ -315,7 +315,7 @@ public static class Message
         }
 
         WriteLine("");
-        Write(Language.GetMessage(Language.MessageKey.MenuSelected));
+        Write(Language.GetMessage(Language.MessageEnum.MenuSelected));
         GetPos(out var left, out var top1);
         Write(select.ToString());
 
@@ -364,28 +364,6 @@ public static class Message
         WriteLine(menus[selected]);
 
         return select;
-    }
-
-    /// <summary>
-    /// 显示日期
-    /// </summary>
-    /// <param name="title">日期类型</param>
-    /// <param name="riqi">日期字符串</param>
-    /// <param name="outRiQi">转换后日期</param>
-    /// <returns>字符串是否是日期</returns>
-    public static bool ShowRiQi(string title, string riqi, out DateTime outRiQi)
-    {
-        var sf = DateTime.TryParse(riqi, out outRiQi);
-        if (sf == false)
-        {
-            WarningLine($"{title}不正确");
-        }
-        else
-        {
-            WriteLine($"{title}：{outRiQi.ToString("yyyy年MM月dd日")}。", true);
-            Clear();
-        }
-        return sf;
     }
 
     /// <summary>
@@ -498,7 +476,7 @@ public static class Message
         {
             if (string.IsNullOrEmpty(defaultPath) == false)
             {
-                title = Language.GetMessage(Language.MessageKey.PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly, defaultPath);
+                title = Language.GetMessage(Language.MessageEnum.PleaseEnterTheFilePathUseDefaultInputPleaseEnterDirectly, defaultPath);
             }
 
             doPrint(true, title);
@@ -662,129 +640,5 @@ public static class Message
 
         return returnkeys;
     }
-
-    /// <summary>
-    /// 获取日期（年）输入
-    /// </summary>
-    /// <param name="defaultValue">默认日期</param>
-    /// <param name="next">光标在（1y2m3d）的位置</param>
-    /// <returns>年数</returns>
-    public static int ReadDateYear(DateTime defaultValue, ref int next)
-    {
-        Write("请输入年份:");
-        GetPos(out var left, out var top);
-        Attention(defaultValue.Year.ToString());
-        Write(defaultValue.ToString("年MM月dd日"));
-
-        var next1 = next;
-        var year = ReadNumber(defaultValue.ToString("yyyy"), left, top, ref next);
-        if (year < 1900 || year > 9999)
-        {
-            year = defaultValue.Year;
-            next = next1;
-        }
-        return year;
-    }
-
-    /// <summary>
-    /// 获取日期（月）输入
-    /// </summary>
-    /// <param name="defaultValue">默认日期</param>
-    /// <param name="next">光标在（1y2m3d）的位置</param>
-    /// <returns>月数</returns>
-    public static int ReadDateMonth(DateTime defaultValue, ref int next)
-    {
-        Write("请输入月份:");
-        Write(defaultValue.ToString("yyyy年"));
-        GetPos(out var left, out var top);
-        Attention(defaultValue.ToString("MM"));
-        Write(defaultValue.ToString("月dd日"));
-
-        var next1 = next;
-        var month = ReadNumber(defaultValue.ToString("MM"), left, top, ref next);
-
-        if (month < 1 || month > 12)
-        {
-            month = defaultValue.Month;
-            next = next1;
-        }
-        return month;
-    }
-
-    /// <summary>
-    /// 获取日期（日）输入
-    /// </summary>
-    /// <param name="defaultValue">默认日期</param>
-    /// <param name="next">光标在（1y2m3d）的位置</param>
-    /// <returns>日数</returns>
-    public static int ReadDateDay(DateTime defaultValue, ref int next)
-    {
-        Write("请输入哪天:");
-        Write(defaultValue.ToString("yyyy年MM月"));
-        GetPos(out var left, out var top);
-        Attention(defaultValue.ToString("dd"));
-        Write("日");
-
-        var next1 = next;
-        var day = ReadNumber(defaultValue.ToString("dd"), left, top, ref next);
-        if (day < 1 || day > 31)
-        {
-            day = defaultValue.Day;
-            next = next1;
-        }
-        return day;
-    }
-
-    /// <summary>
-    /// 获取日期输入
-    /// </summary>
-    /// <param name="title">日期名称</param>
-    /// <param name="defaultDate">默认日期(null=Now)</param>
-    /// <returns>yyyy-MM-dd</returns>
-    public static DateTime ReadDate(string title, DateTime? defaultDate = null)
-    {
-        if (defaultDate is null) defaultDate = DateTime.Now;
-
-        var year = defaultDate?.Year;
-        var month = defaultDate?.Month;
-        var day = defaultDate?.Day;
-
-        var sf = DateTime.TryParse($"{year}-{month}-{day}", out var outRq);
-        var next = 1;
-
-        Clear();
-        WriteLine(title);
-        GetPos(out var left, out var top);
-
-        while (next < 4)
-        {
-            if (next < 1) next = 1;
-            switch (next)
-            {
-                case 1:
-                    SetPos(left, top);
-                    year = ReadDateYear(outRq, ref next);
-                    break;
-                case 2:
-                    SetPos(left, top);
-                    month = ReadDateMonth(outRq, ref next);
-                    break;
-                case 3:
-                    SetPos(left, top);
-                    day = ReadDateDay(outRq, ref next);
-                    break;
-            }
-
-            sf = DateTime.TryParse($"{year}-{month}-{day}", out outRq);
-            while (sf == false && day > 25)
-            {
-                day--;
-                sf = DateTime.TryParse($"{year}-{month}-{day}", out outRq);
-            }
-        }
-
-        return outRq;
-    }
-
 
 }

@@ -69,7 +69,7 @@ public class FileKey
         var fileInfo = new FileInfo(filePath);
         if (fileInfo.Exists == false)
         {
-            key.ErrMessage = Language.GetMessage(Language.MessageKey.ThereIsNoSuchFile);
+            key.ErrMessage = Language.GetMessage(Language.MessageEnum.ThereIsNoSuchFile);
             key.Exists = false;
             return key;
         }

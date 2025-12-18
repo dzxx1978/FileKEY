@@ -11,17 +11,16 @@ public class MenuConfig
     /// 显示配置项主菜单
     /// </summary>
     /// <param name="args"></param>
-    public void ShowMenu(string[]? args = null)
+    public async Task ShowMenu(string[]? args = null)
     {
         if (args is not null && args.Length > 0)
         {
-            AppOption.SetOptions(args);
+            AppStatus.SetOptions(args);
+            if (AppStatus.IsHideMenu || AppStatus.IsHelpShownAndExit)
+                return;
         }
 
-        if (AppOption.IsPathFromArgs || AppOption.IsHelpShownAndExit)
-            return;
-
-        options = AppOption.GetOptions();
+        options = AppStatus.GetOptions();
 
         var menuOptions = new string[] { };
         var menuSelected = 0;
@@ -29,31 +28,31 @@ public class MenuConfig
         do
         {
             menuOptions = [
-                GetMessage(MessageKey.MenuTitle),
-                GetMessage(MessageKey.MenuSetPath),//1
-                GetMessage(MessageKey.MenuSetKey),//2
-                GetMessage(MessageKey.MenuSetOtherOptions),//3
-                GetMessage(MessageKey.MenuConfigFiles),//4
-                GetMessage(MessageKey.MenuShowOptions),//5
-                GetMessage(MessageKey.MenuShowHelp),//6
-                GetMessage(MessageKey.MenuReSet),//7
-                GetMessage(MessageKey.MenuRun),
+                GetMessage(MessageEnum.MenuTitle),
+                GetMessage(MessageEnum.MenuSetPath),//1
+                GetMessage(MessageEnum.MenuSetKey),//2
+                GetMessage(MessageEnum.MenuSetOtherOptions),//3
+                GetMessage(MessageEnum.MenuConfigFiles),//4
+                GetMessage(MessageEnum.MenuShowOptions),//5
+                GetMessage(MessageEnum.MenuShowHelp),//6
+                GetMessage(MessageEnum.MenuReSet),//7
+                GetMessage(MessageEnum.MenuRun),
             ];
             menuSelected = Message.ShowSelectMenu(menuSelected > 0 ? menuSelected : menuOptions.Count() - 1, menuOptions);
 
             switch (menuSelected)
             {
                 case 1:
-                    showMenuPathOptions();
+                    readConsolePathOptions();
                     break;
                 case 2:
-                    showMenuKeyOptions();
+                    readConsoleKeyOptions();
                     break;
                 case 3:
                     showMenuOtherOptions();
                     break;
                 case 4:
-                    showMenuConfigFilesOptions();
+                    await showMenuConfigFilesOptions();
                     break;
                 case 5:
                     Message.WriteLine(GetConfigString(options));
@@ -70,10 +69,13 @@ public class MenuConfig
             }
         } while (menuSelected < menuOptions.Count() - 1);
 
-        AppOption.SetOptions(options.ToArray());
+        AppStatus.SetOptions(options.ToArray());
 
     }
 
+    /// <summary>
+    /// 显示语言文字存盘读取编辑菜单
+    /// </summary>
     private void showMenuLanguageOptions()
     {
         var languageSelected = 0;
@@ -85,12 +87,12 @@ public class MenuConfig
             var languageFiles = GetConfigFiles(configType);
 
             menuOptions = [
-                GetMessage(MessageKey.Language),
-            GetMessage(MessageKey.SaveCurrentOptions),//1
+                GetMessage(MessageEnum.Language),
+            GetMessage(MessageEnum.SaveCurrentOptions),//1
             "en-US",//2
             "zh-CN",//3
             .. GetConfigFileNames(languageFiles),//4
-            GetMessage(MessageKey.MenuClose),
+            GetMessage(MessageEnum.MenuClose),
         ];
             languageSelected = Message.ShowSelectMenu(languageSelected, menuOptions);
 
@@ -98,12 +100,12 @@ public class MenuConfig
             {
                 case 1:
 
-                    var configName = Message.ReadString(GetMessage(MessageKey.PleaseEnterTheConfigurationFileName));
+                    var configName = Message.ReadString(GetMessage(MessageEnum.PleaseEnterTheConfigurationFileName));
                     var configFilePath = GetConfigFilePath(configType, configName, ["en-US", "en", "zh-CN", "zh"]);
 
-                    var language = EditMessage();
+                    var language = EditLanguages();
                     Message.WriteLine(configFilePath);
-                    var consoleKey = Message.Wait(GetMessage(MessageKey.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
+                    var consoleKey = Message.Wait(GetMessage(MessageEnum.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
                     if (consoleKey.Key != ConsoleKey.Y)
                         break;
 
@@ -120,9 +122,9 @@ public class MenuConfig
 
                         var setOrDel = Message.ShowSelectMenu(0, [
                                 selectedLanguageFilePath,
-                            GetMessage(MessageKey.Set),//1
-                            GetMessage(MessageKey.Del),//2
-                            GetMessage(MessageKey.MenuClose),
+                            GetMessage(MessageEnum.Set),//1
+                            GetMessage(MessageEnum.Del),//2
+                            GetMessage(MessageEnum.MenuClose),
                         ]);
 
                         switch (setOrDel)
@@ -142,7 +144,11 @@ public class MenuConfig
 
     }
 
-    private void showMenuConfigFilesOptions()
+    /// <summary>
+    /// 显示配置文件存盘读取菜单
+    /// </summary>
+    /// <returns></returns>
+    private async Task showMenuConfigFilesOptions()
     {
 
         var configSelected = 0;
@@ -154,24 +160,24 @@ public class MenuConfig
             var configFiles = GetConfigFiles(configType);
 
             menuOptions = [
-                GetMessage(MessageKey.MenuConfigFiles),
-            GetMessage(MessageKey.SaveCurrentOptions),//1
-            .. GetConfigFileNames(configFiles),//2
-            GetMessage(MessageKey.MenuClose),
-        ];
+                GetMessage(MessageEnum.MenuConfigFiles),
+                GetMessage(MessageEnum.SaveCurrentOptions),//1
+                .. GetConfigFileNames(configFiles),//2
+                GetMessage(MessageEnum.MenuClose),
+            ];
 
             configSelected = Message.ShowSelectMenu(configSelected, menuOptions);
 
             if (configSelected == 1)
             {
 
-                var configName = Message.ReadString(GetMessage(MessageKey.PleaseEnterTheConfigurationFileName));
+                var configName = Message.ReadString(GetMessage(MessageEnum.PleaseEnterTheConfigurationFileName));
                 var configFilePath = GetConfigFilePath(configType, configName);
 
                 Message.WriteLine(GetConfigString(options));
                 Message.WriteLine(configFilePath);
 
-                var consoleKey = Message.Wait(GetMessage(MessageKey.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
+                var consoleKey = Message.Wait(GetMessage(MessageEnum.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
                 if (consoleKey.Key != ConsoleKey.Y)
                     break;
 
@@ -184,15 +190,15 @@ public class MenuConfig
                 var setOrDel = Message.ShowSelectMenu(0,
                     [
                         configFilePath,
-                    GetMessage(MessageKey.Set),//1
-                    GetMessage(MessageKey.Del),//2
-                    GetMessage(MessageKey.MenuClose),
+                    GetMessage(MessageEnum.Set),//1
+                    GetMessage(MessageEnum.Del),//2
+                    GetMessage(MessageEnum.MenuClose),
                 ]);
 
                 switch (setOrDel)
                 {
                     case 1:
-                        options = LoadConfigFile(configFilePath).ToList();
+                        options = (await LoadConfigFileAsync(configFilePath)).ToList();
 
                         Message.WriteLine(GetConfigString(options));
                         Message.Wait();
@@ -208,6 +214,9 @@ public class MenuConfig
 
     }
 
+    /// <summary>
+    /// 显示其他设置菜单
+    /// </summary>
     private void showMenuOtherOptions()
     {
         var optionSelected = 0;
@@ -216,31 +225,31 @@ public class MenuConfig
         do
         {
             menuOptions = [
-                GetMessage(MessageKey.MenuSetOtherOptions),
-            AppOption.Command_Equals.Substring(2),//"Equals",//1
-            AppOption.Command_GroupBy.Substring(2),//"GroupBy",//2
-            AppOption.Command_GroupMinCount.Substring(2),//"GroupMinCount",//3
-            AppOption.Command_SubDirectory.Substring(2),//"SubDirectory",//4
-            GetMessage(MessageKey.Hash),//5
-            GetMessage(MessageKey.Display),//6
-            GetMessage(MessageKey.Language),//7
-            GetMessage(MessageKey.MenuClose),
-        ];
+                GetMessage(MessageEnum.MenuSetOtherOptions),
+                AppStatus.Command_Equals.Substring(2),//"Equals",//1
+                AppStatus.Command_GroupBy.Substring(2),//"GroupBy",//2
+                AppStatus.Command_GroupMinCount.Substring(2),//"GroupMinCount",//3
+                AppStatus.Command_SubDirectory.Substring(2),//"SubDirectory",//4
+                GetMessage(MessageEnum.Hash),//5
+                GetMessage(MessageEnum.Display),//6
+                GetMessage(MessageEnum.Language),//7
+                GetMessage(MessageEnum.MenuClose),
+            ];
             optionSelected = Message.ShowSelectMenu(optionSelected, menuOptions);
 
             switch (optionSelected)
             {
                 case 1:
-                    showMenuKeyOptions(AppOption.Command_Equals);
+                    readConsoleKeyOptions(AppStatus.KeyTypeEnum.Equals);
                     break;
                 case 2:
                     showMenuGroupByOptions();
                     break;
                 case 3:
-                    showMenuGroupMinCountOptions();
+                    readConsoleGroupMinCountOptions();
                     break;
                 case 4:
-                    showMenuSubDirectoryOptions();
+                    readConsoleSubDirectoryOptions();
                     break;
                 case 5:
                     showMenuHashOptions();
@@ -257,6 +266,9 @@ public class MenuConfig
 
     }
 
+    /// <summary>
+    /// 显示分组设置菜单
+    /// </summary>
     private void showMenuGroupByOptions()
     {
         var groupBySelected = 0;
@@ -264,39 +276,31 @@ public class MenuConfig
 
         do
         {
-            var groupBy = 0;
-            var fromMenuIndex = options.IndexOf(AppOption.Command_GroupBy);
-            if (fromMenuIndex >= 0)
-            {
-                groupBy = options[fromMenuIndex + 1].ToLower() == "type" ? 2 : 3;
-            }
+            var groupBy = optionsGet(AppStatus.Command_GroupBy);
+            if (string.IsNullOrEmpty(groupBy)) groupBy = AppStatus.CommandValue_Noth;
 
             menuOptions = [
-                AppOption.Command_GroupBy,
-                "None",//1
-                $"[{(groupBy==2 ? "T" : " ")}] Type",//2
-                $"[{(groupBy==3 ? "H" : " ")}] Hash",//3
-                GetMessage(MessageKey.MenuClose),
+                AppStatus.Command_GroupBy,
+                AppStatus.CommandValue_Noth,//1
+                $"[{(groupBy.Equals(AppStatus.CommandValue_Type,StringComparison.OrdinalIgnoreCase) ? AppStatus.CommandValue_Type.Substring(0,1).ToUpper() : " ")}] {AppStatus.CommandValue_Type}",//2
+                $"[{(groupBy.Equals(AppStatus.CommandValue_Hash,StringComparison.OrdinalIgnoreCase) ? AppStatus.CommandValue_Hash.Substring(0,1).ToUpper() : " ")}] {AppStatus.CommandValue_Hash}",//3
+                GetMessage(MessageEnum.MenuClose),
             ];
 
-            groupBySelected = Message.ShowSelectMenu(groupBy, menuOptions);
+            groupBySelected = Message.ShowSelectMenu(groupBy.Equals(AppStatus.CommandValue_Type, StringComparison.OrdinalIgnoreCase) ? 2 : groupBy.Equals(AppStatus.CommandValue_Hash, StringComparison.OrdinalIgnoreCase) ? 3 : 0, menuOptions);
 
             switch (groupBySelected)
             {
                 case 1:
-                    if (fromMenuIndex >= 0)
-                    {
-                        options.RemoveAt(fromMenuIndex);
-                        options.RemoveAt(fromMenuIndex);
-                    }
+                    optionsRemove(AppStatus.Command_GroupBy, 2);
                     break;
                 case 2:
-                    options.Add(AppOption.Command_GroupBy);
-                    options.Add("type");
+                    options.Add(AppStatus.Command_GroupBy);
+                    options.Add(AppStatus.CommandValue_Type);
                     goto case 1;
                 case 3:
-                    options.Add(AppOption.Command_GroupBy);
-                    options.Add("hash");
+                    options.Add(AppStatus.Command_GroupBy);
+                    options.Add(AppStatus.CommandValue_Hash);
                     goto case 1;
             }
 
@@ -304,6 +308,9 @@ public class MenuConfig
 
     }
 
+    /// <summary>
+    /// 显示是否显示详细信息设置菜单
+    /// </summary>
     private void showMenuDisplayOptions()
     {
         var displaySelected = 0;
@@ -311,28 +318,30 @@ public class MenuConfig
         do
         {
             menuOptions = [
-                $"-0 {GetMessage(MessageKey.Display)}",
-            GetMessage(MessageKey.Detailed),//1
-            $"[{(options.Contains("-0") ? "0" : " ")}] {GetMessage(MessageKey.Small)}",//2
-            GetMessage(MessageKey.MenuClose),
-        ];
+                $"{AppStatus.Command_0} {GetMessage(MessageEnum.Display)}",
+                GetMessage(MessageEnum.Detailed),//1
+                $"[{(options.Contains(AppStatus.Command_0) ? AppStatus.Command_0.Substring(1) : " ")}] {GetMessage(MessageEnum.Small)}",//2
+                GetMessage(MessageEnum.MenuClose),
+            ];
 
             displaySelected = Message.ShowSelectMenu(displaySelected, menuOptions);
 
             switch (displaySelected)
             {
                 case 1:
-                    options.Remove("-0");
+                    options.Remove(AppStatus.Command_0);
                     break;
                 case 2:
-                    options.Remove("-0");
-                    options.Add("-0");
+                    optionsRemoveOrAdd(AppStatus.Command_0);
                     break;
             }
 
         } while (displaySelected < menuOptions.Count() - 1);
     }
 
+    /// <summary>
+    /// 显示输出Hash类型设置菜单
+    /// </summary>
     private void showMenuHashOptions()
     {
         var hashSelected = 0;
@@ -340,188 +349,217 @@ public class MenuConfig
         do
         {
             menuOptions = [
-                $"-tcms {GetMessage(MessageKey.Hash)}",
-            GetMessage(MessageKey.All),
-            $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-t") ? "T" : " " : "t")}] {Language.Type}",
-            $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-c") ? "C" : " " : "c")}] {Language.Crc}",
-            $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-m") ? "M" : " " : "m")}] {Language.Md5}",
-            $"[{(options.Contains("-t") || options.Contains("-c") || options.Contains("-m") || options.Contains("-s") ? options.Contains("-s") ? "S" : " " : "s")}] {Language.Sha256}",
-            GetMessage(MessageKey.MenuClose),
-        ];
+                $"{AppStatus.Command_t}{AppStatus.Command_c.Substring(1)}{AppStatus.Command_m.Substring(1)}{AppStatus.Command_s.Substring(1)} {GetMessage(MessageEnum.Hash)}",
+                GetMessage(MessageEnum.All),
+                $"[{(options.Contains(AppStatus.Command_t) || options.Contains(AppStatus.Command_c) || options.Contains(AppStatus.Command_m) || options.Contains(AppStatus.Command_s) ? options.Contains(AppStatus.Command_t) ? AppStatus.Command_t.Substring(1).ToUpper() : " " : AppStatus.Command_t.Substring(1).ToLower())}] {Language.Type}",
+                $"[{(options.Contains(AppStatus.Command_t) || options.Contains(AppStatus.Command_c) || options.Contains(AppStatus.Command_m) || options.Contains(AppStatus.Command_s) ? options.Contains(AppStatus.Command_c) ? AppStatus.Command_c.Substring(1).ToUpper() : " " : AppStatus.Command_c.Substring(1).ToLower())}] {Language.Crc}",
+                $"[{(options.Contains(AppStatus.Command_t) || options.Contains(AppStatus.Command_c) || options.Contains(AppStatus.Command_m) || options.Contains(AppStatus.Command_s) ? options.Contains(AppStatus.Command_m) ? AppStatus.Command_m.Substring(1).ToUpper() : " " : AppStatus.Command_m.Substring(1).ToLower())}] {Language.Md5}",
+                $"[{(options.Contains(AppStatus.Command_t) || options.Contains(AppStatus.Command_c) || options.Contains(AppStatus.Command_m) || options.Contains(AppStatus.Command_s) ? options.Contains(AppStatus.Command_s) ? AppStatus.Command_s.Substring(1).ToUpper() : " " : AppStatus.Command_s.Substring(1).ToLower())}] {Language.Sha256}",
+                GetMessage(MessageEnum.MenuClose),
+            ];
 
             hashSelected = Message.ShowSelectMenu(hashSelected, menuOptions);
 
             switch (hashSelected)
             {
                 case 1:
-                    options.Remove("-t");
-                    options.Remove("-c");
-                    options.Remove("-m");
-                    options.Remove("-s");
+                    options.Remove(AppStatus.Command_t);
+                    options.Remove(AppStatus.Command_c);
+                    options.Remove(AppStatus.Command_m);
+                    options.Remove(AppStatus.Command_s);
                     break;
                 case 2:
-                    if (options.Contains("-t"))
-                    {
-                        options.Remove("-t");
-                    }
-                    else
-                    {
-                        options.Add("-t");
-                    }
+                    optionsRemoveOrAdd(AppStatus.Command_t);
                     break;
                 case 3:
-                    if (options.Contains("-c"))
-                    {
-                        options.Remove("-c");
-                    }
-                    else
-                    {
-                        options.Add("-c");
-                    }
+                    optionsRemoveOrAdd(AppStatus.Command_c);
                     break;
                 case 4:
-                    if (options.Contains("-m"))
-                    {
-                        options.Remove("-m");
-                    }
-                    else
-                    {
-                        options.Add("-m");
-                    }
+                    optionsRemoveOrAdd(AppStatus.Command_m);
                     break;
                 case 5:
-                    if (options.Contains("-s"))
-                    {
-                        options.Remove("-s");
-                    }
-                    else
-                    {
-                        options.Add("-s");
-                    }
+                    optionsRemoveOrAdd(AppStatus.Command_s);
                     break;
             }
         } while (hashSelected < menuOptions.Count() - 1);
 
     }
 
-    private void showMenuGroupMinCountOptions()
+    /// <summary>
+    /// 从控制台获取显示分组最小项目数设置输入
+    /// </summary>
+    private void readConsoleGroupMinCountOptions()
     {
-        var groupMinCount = "1";
-        var fromMenuIndex = options.IndexOf(AppOption.Command_GroupMinCount);
-        if (fromMenuIndex >= 0)
-        {
-            groupMinCount = options[fromMenuIndex + 1];
-            options.RemoveAt(fromMenuIndex);
-            options.RemoveAt(fromMenuIndex);
-        }
-
+        var groupMinCount = optionsRemove(AppStatus.Command_GroupMinCount, 2);
         int.TryParse(groupMinCount, out int outNum);
 
-        groupMinCount = Message.ReadNumber(GetMessage(MessageKey.PleaseEnterTheMinimumNumberOfGroupsToDisplay, outNum), defaultValue: outNum);
-
+        groupMinCount = Message.ReadNumber(GetMessage(MessageEnum.PleaseEnterTheMinimumNumberOfGroupsToDisplay, outNum), defaultValue: outNum);
         var isNum = int.TryParse(groupMinCount, out outNum);
 
         if (isNum && outNum > 1)
         {
-            options.Add(AppOption.Command_GroupMinCount);
+            options.Add(AppStatus.Command_GroupMinCount);
             options.Add(outNum.ToString());
         }
     }
 
-    private void showMenuSubDirectoryOptions()
+    /// <summary>
+    /// 从控制台获取扫描子目录层数设置输入
+    /// </summary>
+    private void readConsoleSubDirectoryOptions()
     {
-        var subDirectory = "0";
-        var fromMenuIndex = options.IndexOf(AppOption.Command_SubDirectory);
-        if (fromMenuIndex >= 0)
-        {
-            subDirectory = options[fromMenuIndex + 1];
-            options.RemoveAt(fromMenuIndex);
-            options.RemoveAt(fromMenuIndex);
-        }
-
+        var subDirectory = optionsRemove(AppStatus.Command_SubDirectory, 2);
         int.TryParse(subDirectory, out int outNum);
 
-        subDirectory = Message.ReadNumber(GetMessage(MessageKey.PleaseEnterTheNumberOfScannedSubdirectoriesAtDifferentLevels, outNum), defaultValue: outNum);
-
+        subDirectory = Message.ReadNumber(GetMessage(MessageEnum.PleaseEnterTheNumberOfScannedSubdirectoriesAtDifferentLevels, outNum), defaultValue: outNum);
         var isNum = int.TryParse(subDirectory, out outNum);
 
         if (isNum && outNum > 0)
         {
-            options.Add(AppOption.Command_SubDirectory);
+            options.Add(AppStatus.Command_SubDirectory);
             options.Add(outNum.ToString());
         }
     }
 
-    private void showMenuPathOptions()
+    /// <summary>
+    /// 从控制台获取文件文件夹路径配置输入
+    /// </summary>
+    private void readConsolePathOptions()
     {
-        var fileOrDirectoryPath = Message.ReadPath(GetMessage(MessageKey.PleaseEnterTheFilePath), AppOption.FileOrDirectoryPath);
+        var fileOrDirectoryPath = Message.ReadPath(GetMessage(MessageEnum.PleaseEnterTheFilePath), string.Empty);
+
+        optionsRemove(AppStatus.Command_ShowMenu);
+        optionsRemove(AppStatus.Command_File, 2);
+        optionsRemove(AppStatus.Command_Directory, 2);
+
+        if (string.IsNullOrEmpty(fileOrDirectoryPath)) return;
+
         if (File.Exists(fileOrDirectoryPath))
         {
-            options.Add(AppOption.Command_File);
+            options.Add(AppStatus.Command_File);
         }
         else if (Directory.Exists(fileOrDirectoryPath))
         {
-            options.Add(AppOption.Command_Directory);
+            options.Add(AppStatus.Command_Directory);
         }
         else
         {
-            Message.WarningLine(GetMessage(MessageKey.TheInputFilePathDoesNotExist, fileOrDirectoryPath));
+            Message.WarningLine(GetMessage(MessageEnum.TheInputFilePathDoesNotExist, fileOrDirectoryPath));
             return;
         }
-
-        var fromMenuIndex = options.IndexOf(AppOption.Command_PathFromMenu);
-        if (fromMenuIndex > 0)
-        {
-            options.RemoveAt(fromMenuIndex);
-            options.RemoveAt(fromMenuIndex - 1);
-            options.RemoveAt(fromMenuIndex - 2);
-        }
         options.Add(fileOrDirectoryPath);
-        options.Add(AppOption.Command_PathFromMenu);
+        options.Add(AppStatus.Command_ShowMenu);
 
-        AppOption.FileOrDirectoryPath = fileOrDirectoryPath;
     }
 
-    private void showMenuKeyOptions(string optionName = "")
+    /// <summary>
+    /// 从控制台获取验证值配置输入
+    /// </summary>
+    /// <param name="setType"></param>
+    private void readConsoleKeyOptions(AppStatus.KeyTypeEnum setType = AppStatus.KeyTypeEnum.Noth)
     {
-        var fromMenuIndex = options.IndexOf(AppOption.Command_FileKeys);
-        if (fromMenuIndex < 0)
-        {
-            fromMenuIndex = options.IndexOf(AppOption.Command_Key);
-            if (fromMenuIndex < 0)
-            {
-                fromMenuIndex = options.IndexOf(AppOption.Command_Equals);
-            }
-        }
-        if (fromMenuIndex >= 0)
-        {
-            options.RemoveAt(fromMenuIndex);
-            options.RemoveAt(fromMenuIndex);
-        }
+        if (options.Contains(AppStatus.Command_GroupBy)) return;
 
-        var comparisonKey = Message.ReadString(GetMessage(MessageKey.PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored));
-        if (optionName == AppOption.Command_Equals && File.Exists(comparisonKey))
+        optionsRemove(AppStatus.Command_FileKeys, 2);
+        optionsRemove(AppStatus.Command_Key, 2);
+        optionsRemove(AppStatus.Command_Equals, 2);
+
+        var comparisonKey = Message.ReadString(GetMessage(MessageEnum.PleaseEnterTheVerificationKeyValueOrTheFilePathWhereTheKeyValueIsStored));
+        if (string.IsNullOrEmpty(comparisonKey)) return;
+
+        if (setType == AppStatus.KeyTypeEnum.Equals)
         {
-            options.Add(AppOption.Command_Equals);
+            if (File.Exists(comparisonKey))
+            {
+                options.Add(AppStatus.Command_Equals);
+            }
+            else
+            {
+                Message.WarningLine(GetMessage(MessageEnum.TheInputFilePathDoesNotExist, $"\"{AppStatus.Command_Equals} {comparisonKey}\""));
+                return;
+            }
         }
         else if (File.Exists(comparisonKey))
         {
-            options.Add(AppOption.Command_FileKeys);
-        }
-        else if (!string.IsNullOrEmpty(comparisonKey))
-        {
-            options.Add(AppOption.Command_Key);
+            options.Add(AppStatus.Command_FileKeys);
         }
         else
         {
-            return;
+            options.Add(AppStatus.Command_Key);
         }
+
         options.Add(comparisonKey);
+
     }
 
-    private List<string> EditMessage()
+    /// <summary>
+    /// 获得指定配置项的值
+    /// </summary>
+    /// <param name="item">配置名称</param>
+    /// <param name="count">值所在偏移行</param>
+    /// <returns></returns>
+    private string optionsGet(string item, int count = 1)
     {
-        var languages = GetMessages();
+        var outOption = "";
+        var fromMenuIndex = options.IndexOf(item);
+        if (fromMenuIndex >= 0)
+        {
+            if (options.Count > fromMenuIndex + count - 1)
+                outOption = options[fromMenuIndex + count - 1];
+        }
+
+        return outOption;
+    }
+
+    /// <summary>
+    /// 移除指定名称配置项，并返回最后一条被移除的配置内容。
+    /// </summary>
+    /// <param name="item">移除名称</param>
+    /// <param name="count">连续移除行数</param>
+    /// <returns>最后一条被移除的行</returns>
+    private string optionsRemove(string item, int count = 1)
+    {
+        var outOption = "";
+        var fromMenuIndex = options.IndexOf(item);
+        if (fromMenuIndex >= 0)
+        {
+            for (var i = 1; i <= count; i++)
+            {
+                if (options.Count == fromMenuIndex) break;
+                if (i == count) outOption = options[fromMenuIndex];
+                options.RemoveAt(fromMenuIndex);
+            }
+        }
+
+        return outOption;
+    }
+
+    /// <summary>
+    /// 移除或添加配置项（存在时移除，不存在时添加）
+    /// </summary>
+    /// <param name="item">项目名称</param>
+    /// <returns></returns>
+    private bool optionsRemoveOrAdd(string item)
+    {
+        if (options.Contains(item))
+        {
+            options.Remove(item);
+            return false;
+        }
+        else
+        {
+            options.Add(item);
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// 编辑语言配置
+    /// </summary>
+    /// <returns></returns>
+    private List<string> EditLanguages()
+    {
+        var languages = GetLanguages();
 
         for (var i = 0; i < languages.Count; i++)
         {
@@ -530,7 +568,7 @@ public class MenuConfig
 
             if (!string.IsNullOrEmpty(readLanguage))
             {
-                languages[i] = languages[i].Split('=')[0] + "=" + readLanguage;
+                languages[i] = $"{languages[i].Split('=')[0]}={readLanguage}";
             }
         }
 

@@ -8,7 +8,7 @@ namespace TestProject
         public void LanguageInitializationEnglish()
         {
             Language.Initialize("en");
-            var message = Language.GetMessage(Language.MessageKey.End);
+            var message = Language.GetMessage(Language.MessageEnum.End);
             Assert.Equal("*END*", message);
         }
 
@@ -16,7 +16,7 @@ namespace TestProject
         public void LanguageInitializationChinese()
         {
             Language.Initialize("zh");
-            var message = Language.GetMessage(Language.MessageKey.End);
+            var message = Language.GetMessage(Language.MessageEnum.End);
             Assert.Equal("*结束*", message);
         }
 
@@ -24,7 +24,7 @@ namespace TestProject
         public void LanguageInitializationSystem()
         {
             Language.Initialize();
-            var message = Language.GetMessage(Language.MessageKey.End);
+            var message = Language.GetMessage(Language.MessageEnum.End);
 
             var currentCulture = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
             if (currentCulture.Equals("en"))
