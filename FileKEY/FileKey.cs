@@ -56,6 +56,10 @@ public class FileKey
         }
     }
 
+    public static string[] GetFileTypes() {
+        return fileTypes.Select(p => $"{p.Key}={p.Value}").ToArray();
+    }
+
     private bool outTypeOption;
     private bool outCrcOption;
     private bool outMd5Option;

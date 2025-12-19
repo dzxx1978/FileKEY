@@ -1,4 +1,6 @@
-﻿using static FileKEY.ConfigFile;
+﻿using System;
+using System.Runtime.InteropServices;
+using static FileKEY.ConfigFile;
 using static FileKEY.Language;
 
 namespace FileKEY;
@@ -25,7 +27,7 @@ public class MenuConfig
         }
         options = AppStatus.GetOptions();
 
-        var menuOptions = new string[] { };
+        var menuOptions = Array.Empty<string>();
         var menuSelected = 0;
 
         do
@@ -76,6 +78,111 @@ public class MenuConfig
 
     }
 
+    private bool showMenuEditTypeOptions(string configFilePath)
+    {
+        var types = LoadConfigFile(configFilePath).ToList();
+
+        var menuSelected = types.Count + 1;
+        var menuOptions = Array.Empty<string>();
+
+        do
+        {
+            menuOptions = [
+                GetMessage(MessageEnum.Language),
+                .. types,//1...
+                GetMessage(MessageEnum.Add),//-3
+                GetMessage(MessageEnum.SaveToFile),//-2
+                GetMessage(MessageEnum.MenuClose),
+            ];
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
+
+            if (menuSelected <= types.Count)
+            {
+                var editSelected = Message.ShowSelectMenu(0, [
+                    types[menuSelected - 1],
+                    GetMessage(MessageEnum.Edit),//1
+                    GetMessage(MessageEnum.Del),//2
+                    GetMessage(MessageEnum.MenuClose),
+                ]);
+
+                switch (editSelected)
+                {
+                    case 1:
+                        var item = EditTypeItem(types[menuSelected - 1]);
+                        if (!string.IsNullOrEmpty(item)) types[menuSelected - 1] = item;
+                        break;
+                    case 2:
+                        types.RemoveAt(menuSelected - 1);
+                        break;
+                }
+            }
+            else if (menuSelected == menuOptions.Count() - 3)
+            {
+                var item = EditTypeItem();
+                if (!string.IsNullOrEmpty(item)) types.Add(item);
+            }
+            else if (menuSelected == menuOptions.Count() - 2)
+            {
+                Message.WriteLine(configFilePath);
+                var consoleKey = Message.Wait(GetMessage(MessageEnum.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
+                if (consoleKey.Key != ConsoleKey.Y)
+                    break;
+
+                SaveConfigFile(configFilePath, types.ToArray());
+
+                return true;
+            }
+        } while (menuSelected < menuOptions.Count() - 1);
+
+        return false;
+    }
+
+    private string EditTypeItem(string item = "") {
+
+        var typeID = "";
+        var typeNames = new List<string>();
+
+        if (!string.IsNullOrEmpty(item))
+        {
+            typeID = item.Split('=')[0];
+            typeNames = item.Substring(typeID.Length + 1).Split(';').Select(p => p.Trim()).ToList();
+        }
+        else
+        {
+            typeID = Message.ReadString("+>");
+        }
+        if (string.IsNullOrEmpty(typeID)) return item;
+
+        Message.WarningLine(typeID, false);
+        for (var i = 0; i < typeNames.Count; i++)
+        {
+            Message.WriteLine(typeNames[i]);
+            var newType = Message.ReadString("=>");
+            if (!string.IsNullOrEmpty(newType))
+            {
+                typeNames[i] = newType;
+            }
+        }
+
+        while (true)
+        {
+            var newType = Message.ReadString("+>");
+            if (!string.IsNullOrEmpty(newType))
+            {
+                typeNames.Add(newType);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (typeNames.Count > 0)
+            item = $"{typeID}={string.Join("; ", typeNames.Where(p => !string.IsNullOrEmpty(p)).Select(p => p.Trim()))}";
+
+        return item;
+    }
+
     /// <summary>
     /// 编辑语言配置
     /// </summary>
@@ -85,16 +192,14 @@ public class MenuConfig
         var languages = GetLanguages();
 
         var menuSelected = languages.Count + 1;
-        var menuOptions = new string[] { };
+        var menuOptions = Array.Empty<string>();
         var configType = ConfigTypeEnum.Language;
 
         var configName = Message.ReadString(GetMessage(MessageEnum.PleaseEnterTheConfigurationFileName));
-        var configFilePath = GetConfigFilePath(configType, configName, ["en-US", "en", "zh-CN", "zh"]);
+        var configFilePath = GetNewConfigFilePath(configType, configName, ["en-US", "en", "zh-CN", "zh"]);
 
         do
         {
-            var languageFiles = GetConfigFiles(configType);
-
             menuOptions = [
                 GetMessage(MessageEnum.Language),
                 .. languages,//1...
@@ -129,13 +234,14 @@ public class MenuConfig
 
         return false;
     }
+
     /// <summary>
     /// 显示语言文字存盘读取编辑菜单
     /// </summary>
     private void showMenuLanguageFileOptions()
     {
-        var languageSelected = 0;
-        var menuOptions = new string[] { };
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
         var configType = ConfigTypeEnum.Language;
 
         do
@@ -150,24 +256,24 @@ public class MenuConfig
                 .. GetConfigFileNames(languageFiles),//4
                 GetMessage(MessageEnum.MenuClose),
             ];
-            languageSelected = Message.ShowSelectMenu(languageSelected, menuOptions);
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
-            switch (languageSelected)
+            switch (menuSelected)
             {
                 case 1:
                     showMenuEditLanguagesOptions();
                     break;
                 case 2:
                 case 3:
-                    Initialize(menuOptions[languageSelected]);
+                    Initialize(menuOptions[menuSelected]);
                     break;
                 default:
-                    if (languageSelected < menuOptions.Count() - 1)
+                    if (menuSelected < menuOptions.Count() - 1)
                     {
-                        var selectedLanguageFilePath = languageFiles[languageSelected - 4];
+                        var configFilePath = languageFiles[menuSelected - 4];
 
                         var setOrDel = Message.ShowSelectMenu(0, [
-                            selectedLanguageFilePath,
+                            configFilePath,
                             GetMessage(MessageEnum.Show),//1
                             GetMessage(MessageEnum.Set),//2
                             GetMessage(MessageEnum.Del),//3
@@ -178,25 +284,23 @@ public class MenuConfig
                         switch (setOrDel)
                         {
                             case 1:
-                                var language = LoadConfigFile(selectedLanguageFilePath);
-                                Message.WriteLine(GetConfigString(language.ToList()));
-                                Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
+                                displayConfigFile(configFilePath);
                                 break;
                             case 2:
-                                Initialize(GetConfigName(configType, selectedLanguageFilePath));
+                                Initialize(GetConfigName(configType, configFilePath));
                                 break;
                             case 3:
-                                DeleteConfigFile(selectedLanguageFilePath);
+                                DeleteConfigFile(configFilePath);
                                 break;
                             case 4:
-                                CopyToDefaultConfigFile(selectedLanguageFilePath);
+                                CopyToDefaultConfigFile(configFilePath);
                                 goto case 2;
                         }
 
                     }
                     break;
             }
-        } while (languageSelected < menuOptions.Count() - 1);
+        } while (menuSelected < menuOptions.Count() - 1);
 
     }
 
@@ -205,8 +309,8 @@ public class MenuConfig
     /// </summary>
     private void showMenuStatusFileOptions() {
 
-        var configSelected = 0;
-        var menuOptions = new string[] { };
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
         var configType = ConfigTypeEnum.Status;
 
         do
@@ -220,13 +324,12 @@ public class MenuConfig
                 GetMessage(MessageEnum.MenuClose),
             ];
 
-            configSelected = Message.ShowSelectMenu(configSelected, menuOptions);
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
-            if (configSelected == 1)
+            if (menuSelected == 1)
             {
-
                 var configName = Message.ReadString(GetMessage(MessageEnum.PleaseEnterTheConfigurationFileName));
-                var configFilePath = GetConfigFilePath(configType, configName);
+                var configFilePath = GetNewConfigFilePath(configType, configName);
 
                 Message.WriteLine(GetConfigString(options));
                 Message.WriteLine(configFilePath);
@@ -237,9 +340,9 @@ public class MenuConfig
 
                 SaveConfigFile(configFilePath, options.ToArray());
             }
-            else if (configSelected < menuOptions.Count() - 1)
+            else if (menuSelected < menuOptions.Count() - 1)
             {
-                var configFilePath = configFiles[configSelected - 2];
+                var configFilePath = configFiles[menuSelected - 2];
 
                 var setOrDel = Message.ShowSelectMenu(0,
                     [
@@ -254,9 +357,7 @@ public class MenuConfig
                 switch (setOrDel)
                 {
                     case 1:
-                        var language = LoadConfigFile(configFilePath).ToList();
-                        Message.WriteLine(GetConfigString(language));
-                        Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
+                        displayConfigFile(configFilePath);
                         break;
                     case 2:
                         options = LoadConfigFile(configFilePath).ToList();
@@ -273,7 +374,7 @@ public class MenuConfig
 
             }
 
-        } while (configSelected < menuOptions.Count() - 1);
+        } while (menuSelected < menuOptions.Count() - 1);
 
     }
 
@@ -283,8 +384,8 @@ public class MenuConfig
     private void showMenuDefaultFileOptions()
     {
 
-        var configSelected = 0;
-        var menuOptions = new string[] { };
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
         var configType = ConfigTypeEnum.Default;
 
         do
@@ -297,11 +398,11 @@ public class MenuConfig
                 GetMessage(MessageEnum.MenuClose),
             ];
 
-            configSelected = Message.ShowSelectMenu(configSelected, menuOptions);
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
-            if (configSelected < menuOptions.Count() - 1)
+            if (menuSelected < menuOptions.Count() - 1)
             {
-                var configFilePath = configFiles[configSelected - 1];
+                var configFilePath = configFiles[menuSelected - 1];
 
                 var setOrDel = Message.ShowSelectMenu(0,
                     [
@@ -319,7 +420,7 @@ public class MenuConfig
 
             }
 
-        } while (configSelected < menuOptions.Count() - 1);
+        } while (menuSelected < menuOptions.Count() - 1);
 
     }
 
@@ -329,8 +430,8 @@ public class MenuConfig
     /// <returns></returns>
     private void showMenuConfigFilesOptions()
     {
-        var optionSelected = 0;
-        var menuOptions = new string[] { };
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
 
         do
         {
@@ -342,9 +443,9 @@ public class MenuConfig
                 GetMessage(MessageEnum.Default),//4
                 GetMessage(MessageEnum.MenuClose),
             ];
-            optionSelected = Message.ShowSelectMenu(optionSelected, menuOptions);
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
-            switch (optionSelected)
+            switch (menuSelected)
             {
                 case 1:
                     showMenuStatusFileOptions();
@@ -353,15 +454,96 @@ public class MenuConfig
                     showMenuLanguageFileOptions();
                     break;
                 case 3:
-                    // ToDo : type menu
+                    showMenuTypeFileOptions();
                     break;
                 case 4:
                     showMenuDefaultFileOptions();
                     break;
             }
 
-        } while (optionSelected < menuOptions.Count() - 1);
+        } while (menuSelected < menuOptions.Count() - 1);
 
+    }
+
+    private void showMenuTypeFileOptions()
+    {
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
+        var configType = ConfigTypeEnum.Type;
+
+        do
+        {
+            var configFiles = GetConfigFiles(configType);
+
+            menuOptions = [
+                GetMessage(MessageEnum.Type),
+                GetMessage(MessageEnum.SaveCurrentOptions),//1
+                .. GetConfigFileNames(configFiles),//2
+                GetMessage(MessageEnum.MenuClose),
+            ];
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
+
+            if (menuSelected == 1)
+            {
+                var configName = Message.ReadString(GetMessage(MessageEnum.PleaseEnterTheConfigurationFileName));
+                var configFilePath = GetNewConfigFilePath(configType, configName);
+
+                Message.WriteLine(configFilePath);
+
+                var consoleKey = Message.Wait(GetMessage(MessageEnum.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
+                if (consoleKey.Key != ConsoleKey.Y)
+                    break;
+
+                SaveConfigFile(configFilePath, FileKey.GetFileTypes());
+            }
+            else if (menuSelected < menuOptions.Count() - 1)
+            {
+                var configFilePath = configFiles[menuSelected - 2];
+
+                var setOrDel = Message.ShowSelectMenu(0,
+                    [
+                        configFilePath,
+                        GetMessage(MessageEnum.Show),//1
+                        GetMessage(MessageEnum.Set),//2
+                        GetMessage(MessageEnum.Edit),//3
+                        GetMessage(MessageEnum.Del),//4
+                        GetMessage(MessageEnum.Default),//5
+                        GetMessage(MessageEnum.MenuClose),
+                    ]);
+
+                switch (setOrDel)
+                {
+                    case 1:
+                        displayConfigFile(configFilePath);
+                        break;
+                    case 2:
+                        var types = LoadConfigFile(configFilePath);
+                        FileKey.InitializeFileTypes(types);
+                        break;
+                    case 3:
+                        showMenuEditTypeOptions(configFilePath);
+                        break;
+                    case 4:
+                        DeleteConfigFile(configFilePath);
+                        break;
+                    case 5:
+                        CopyToDefaultConfigFile(configFilePath);
+                        break;
+                }
+
+            }
+
+        } while (menuSelected < menuOptions.Count() - 1);
+    }
+
+    /// <summary>
+    /// 读取并显示配置文件
+    /// </summary>
+    /// <param name="configFilePath">配置文件路径和文件名</param>
+    private void displayConfigFile(string configFilePath) {
+        var config = LoadConfigFile(configFilePath).ToList();
+        Message.WriteLine(GetConfigString(config));
+        Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
     }
 
     /// <summary>
@@ -369,8 +551,8 @@ public class MenuConfig
     /// </summary>
     private void showMenuOtherOptions()
     {
-        var optionSelected = 0;
-        var menuOptions = new string[] { };
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
 
         do
         {
@@ -384,9 +566,9 @@ public class MenuConfig
                 GetMessage(MessageEnum.Display),//6
                 GetMessage(MessageEnum.MenuClose),
             ];
-            optionSelected = Message.ShowSelectMenu(optionSelected, menuOptions);
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
-            switch (optionSelected)
+            switch (menuSelected)
             {
                 case 1:
                     readConsoleKeyOptions(AppStatus.KeyTypeEnum.Equals);
@@ -408,7 +590,7 @@ public class MenuConfig
                     break;
             }
 
-        } while (optionSelected < menuOptions.Count() - 1);
+        } while (menuSelected < menuOptions.Count() - 1);
 
     }
 
@@ -417,8 +599,8 @@ public class MenuConfig
     /// </summary>
     private void showMenuGroupByOptions()
     {
-        var groupBySelected = 0;
-        var menuOptions = new string[] { };
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
 
         do
         {
@@ -433,9 +615,9 @@ public class MenuConfig
                 GetMessage(MessageEnum.MenuClose),
             ];
 
-            groupBySelected = Message.ShowSelectMenu(groupBy.Equals(AppStatus.CommandValue_Type, StringComparison.OrdinalIgnoreCase) ? 2 : groupBy.Equals(AppStatus.CommandValue_Hash, StringComparison.OrdinalIgnoreCase) ? 3 : 0, menuOptions);
+            menuSelected = Message.ShowSelectMenu(groupBy.Equals(AppStatus.CommandValue_Type, StringComparison.OrdinalIgnoreCase) ? 2 : groupBy.Equals(AppStatus.CommandValue_Hash, StringComparison.OrdinalIgnoreCase) ? 3 : 0, menuOptions);
 
-            switch (groupBySelected)
+            switch (menuSelected)
             {
                 case 1:
                     optionsRemove(AppStatus.Command_GroupBy, 2);
@@ -448,7 +630,7 @@ public class MenuConfig
                     break;
             }
 
-        } while (groupBySelected < menuOptions.Count() - 1);
+        } while (menuSelected < menuOptions.Count() - 1);
 
     }
 
@@ -457,8 +639,8 @@ public class MenuConfig
     /// </summary>
     private void showMenuDisplayOptions()
     {
-        var displaySelected = 0;
-        var menuOptions = new string[] { };
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
         do
         {
             menuOptions = [
@@ -468,9 +650,9 @@ public class MenuConfig
                 GetMessage(MessageEnum.MenuClose),
             ];
 
-            displaySelected = Message.ShowSelectMenu(displaySelected, menuOptions);
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
-            switch (displaySelected)
+            switch (menuSelected)
             {
                 case 1:
                     options.Remove(AppStatus.Command_0);
@@ -480,7 +662,7 @@ public class MenuConfig
                     break;
             }
 
-        } while (displaySelected < menuOptions.Count() - 1);
+        } while (menuSelected < menuOptions.Count() - 1);
     }
 
     /// <summary>
@@ -488,8 +670,8 @@ public class MenuConfig
     /// </summary>
     private void showMenuHashOptions()
     {
-        var hashSelected = 0;
-        var menuOptions = new string[] { };
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
         do
         {
             menuOptions = [
@@ -502,9 +684,9 @@ public class MenuConfig
                 GetMessage(MessageEnum.MenuClose),
             ];
 
-            hashSelected = Message.ShowSelectMenu(hashSelected, menuOptions);
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
-            switch (hashSelected)
+            switch (menuSelected)
             {
                 case 1:
                     options.Remove(AppStatus.Command_t);
@@ -525,7 +707,7 @@ public class MenuConfig
                     optionsRemoveOrAdd(AppStatus.Command_s);
                     break;
             }
-        } while (hashSelected < menuOptions.Count() - 1);
+        } while (menuSelected < menuOptions.Count() - 1);
 
     }
 

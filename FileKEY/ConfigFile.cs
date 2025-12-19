@@ -102,7 +102,7 @@ public static class ConfigFile
     /// <param name="configName">配置名称</param>
     /// <param name="disableNames">禁用配置名称列表</param>
     /// <returns></returns>
-    public static string GetConfigFilePath(ConfigTypeEnum configType, string configName, string[]? disableNames = null)
+    public static string GetNewConfigFilePath(ConfigTypeEnum configType, string configName, string[]? disableNames = null)
     {
 
         var configFileName = configName;
