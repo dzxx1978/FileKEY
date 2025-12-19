@@ -86,7 +86,7 @@ public class MenuConfig
 
         var menuSelected = languages.Count + 1;
         var menuOptions = new string[] { };
-        var configType = ConfigType.Language;
+        var configType = ConfigTypeEnum.Language;
 
         var configName = Message.ReadString(GetMessage(MessageEnum.PleaseEnterTheConfigurationFileName));
         var configFilePath = GetConfigFilePath(configType, configName, ["en-US", "en", "zh-CN", "zh"]);
@@ -136,7 +136,7 @@ public class MenuConfig
     {
         var languageSelected = 0;
         var menuOptions = new string[] { };
-        var configType = ConfigType.Language;
+        var configType = ConfigTypeEnum.Language;
 
         do
         {
@@ -207,7 +207,7 @@ public class MenuConfig
 
         var configSelected = 0;
         var menuOptions = new string[] { };
-        var configType = ConfigType.Status;
+        var configType = ConfigTypeEnum.Status;
 
         do
         {
@@ -285,7 +285,7 @@ public class MenuConfig
 
         var configSelected = 0;
         var menuOptions = new string[] { };
-        var configType = ConfigType.Default;
+        var configType = ConfigTypeEnum.Default;
 
         do
         {
@@ -338,7 +338,8 @@ public class MenuConfig
                 GetMessage(MessageEnum.MenuSetOtherOptions),
                 GetMessage(MessageEnum.Status),//1
                 GetMessage(MessageEnum.Language),//2
-                GetMessage(MessageEnum.Default),//3
+                GetMessage(MessageEnum.Type),//3
+                GetMessage(MessageEnum.Default),//4
                 GetMessage(MessageEnum.MenuClose),
             ];
             optionSelected = Message.ShowSelectMenu(optionSelected, menuOptions);
@@ -352,6 +353,9 @@ public class MenuConfig
                     showMenuLanguageFileOptions();
                     break;
                 case 3:
+                    // ToDo : type menu
+                    break;
+                case 4:
                     showMenuDefaultFileOptions();
                     break;
             }
@@ -746,20 +750,25 @@ public class MenuConfig
     private void setDefaultConfig()
     {
 
-        var configFiles = GetConfigFiles(ConfigType.Default);
+        var configFiles = GetConfigFiles(ConfigTypeEnum.Default);
 
         foreach (var configFile in configFiles)
         {
-            if (Path.GetFileNameWithoutExtension(configFile).EndsWith(ConfigType.Status.ToString()))
+            var configFileName = Path.GetFileNameWithoutExtension(configFile);
+            if (configFileName.EndsWith(ConfigTypeEnum.Status.ToString()))
             {
                 options = LoadConfigFile(configFile).ToList();
                 AppStatus.SetOptions(options.ToArray());
             }
-            else if (Path.GetFileNameWithoutExtension(configFile).EndsWith(ConfigType.Language.ToString()))
+            else if (configFileName.EndsWith(ConfigTypeEnum.Language.ToString()))
             {
-                Initialize(GetConfigName(ConfigType.Default, configFile));
+                Initialize(GetConfigName(ConfigTypeEnum.Default, configFile));
             }
-
+            else if (configFileName.EndsWith(ConfigTypeEnum.Type.ToString()))
+            {
+                var types = LoadConfigFile(configFile);
+                FileKey.InitializeFileTypes(types);
+            }
         }
     }
 }

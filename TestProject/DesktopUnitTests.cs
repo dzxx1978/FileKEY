@@ -65,7 +65,7 @@ namespace TestProject
         [Fact]
         public void LoadTestLanguage()
         {
-            var languageFile = ConfigFile.GetConfigFilePath(ConfigFile.ConfigType.Language, "test");
+            var languageFile = ConfigFile.GetConfigFilePath(ConfigFile.ConfigTypeEnum.Language, "test");
             var testLanguageFile = Path.GetFileName(languageFile);
 
             if (!File.Exists(languageFile) && File.Exists(testLanguageFile))

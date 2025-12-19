@@ -24,11 +24,21 @@ public class FileKey
         }
     }
 
-    private bool isFileTypesInitialized = false;
-    private Dictionary<string, string> fileTypes = new();
-    private void InitializeFileTypes()
+    private static bool isFileTypesInitialized = false;
+    private static Dictionary<string, string> fileTypes = new();
+    public static void InitializeFileTypes(string[]? types = null)
     {
-        if (!isFileTypesInitialized)
+        if (types is not null && types.Length > 0)
+        {
+            fileTypes.Clear();
+            foreach (var item in types)
+            {
+                var typeID = item.Split('=')[0].Trim();
+                var typeName = item.Substring(typeID.Length + 1).Trim();
+                fileTypes.Add(typeID, typeName);
+            }
+        }
+        else if (!isFileTypesInitialized)
         {
             fileTypes.Clear();
             fileTypes.Add("0000000000000000", "Iso(iso)");//type:4552806260000000000

@@ -107,6 +107,7 @@ public static class Language
         Status,
         Default,
         Show,
+        Type,
     }
 
     private static void Initialize_en()
@@ -240,10 +241,10 @@ FileKEY [path] [key] [-0tcms]
 
     private static void LoadLanguage(string language)
     {
-        var configFilePath = GetConfigFilePath(ConfigType.Language, language);
+        var configFilePath = GetConfigFilePath(ConfigTypeEnum.Language, language);
         if (!File.Exists(configFilePath))
         {
-            configFilePath = GetConfigFilePath(ConfigType.Default, language);
+            configFilePath = GetConfigFilePath(ConfigTypeEnum.Default, language);
         }
         var lines = LoadConfigFile(configFilePath);
 

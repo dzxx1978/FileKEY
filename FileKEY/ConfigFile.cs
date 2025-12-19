@@ -10,11 +10,12 @@ public static class ConfigFile
     /// <summary>
     /// 配置类型
     /// </summary>
-    public enum ConfigType
+    public enum ConfigTypeEnum
     {
         Default,
         Status,
         Language,
+        Type,
         Data,
     }
 
@@ -27,7 +28,7 @@ public static class ConfigFile
     {
         if (string.IsNullOrEmpty(confitType))
         {
-            confitType = ConfigType.Default.ToString();
+            confitType = ConfigTypeEnum.Default.ToString();
         }
 
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -46,7 +47,7 @@ public static class ConfigFile
     /// </summary>
     /// <param name="configType">配置类型</param>
     /// <returns></returns>
-    public static string[] GetConfigFiles(ConfigType configType)
+    public static string[] GetConfigFiles(ConfigTypeEnum configType)
     {
         var configRootPath = GetConfigRootPath(configType.ToString());
         return Directory.GetFiles(configRootPath, $"{configType.ToString()}_*.txt");
@@ -69,7 +70,7 @@ public static class ConfigFile
     /// <param name="configType">配置类型</param>
     /// <param name="configFileName">配置文件名</param>
     /// <returns></returns>
-    public static string GetConfigName(ConfigType configType, string configFileName)
+    public static string GetConfigName(ConfigTypeEnum configType, string configFileName)
     {
         return Path.GetFileNameWithoutExtension(configFileName).Substring(configType.ToString().Length + 1);
     }
@@ -101,7 +102,7 @@ public static class ConfigFile
     /// <param name="configName">配置名称</param>
     /// <param name="disableNames">禁用配置名称列表</param>
     /// <returns></returns>
-    public static string GetConfigFilePath(ConfigType configType, string configName, string[]? disableNames = null)
+    public static string GetConfigFilePath(ConfigTypeEnum configType, string configName, string[]? disableNames = null)
     {
 
         var configFileName = configName;
@@ -199,8 +200,8 @@ public static class ConfigFile
             if (File.Exists(configFilePath))
             {
                 var fileName = Path.GetFileNameWithoutExtension(configFilePath);
-                fileName = $"{ConfigType.Default.ToString()}_{fileName.Split('_')[0]}.txt";
-                var defaultFilePath = Path.Combine(GetConfigRootPath(ConfigType.Default.ToString()), fileName);
+                fileName = $"{ConfigTypeEnum.Default.ToString()}_{fileName.Split('_')[0]}.txt";
+                var defaultFilePath = Path.Combine(GetConfigRootPath(ConfigTypeEnum.Default.ToString()), fileName);
                 File.Copy(configFilePath, defaultFilePath, true);
                 return true;
             }
