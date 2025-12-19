@@ -148,7 +148,6 @@ public static class ConfigFile
         try
         {
             File.WriteAllLines(configFilePath, content);
-
             return true;
         }
         catch { }

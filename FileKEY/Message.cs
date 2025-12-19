@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace FileKEY;
@@ -272,23 +273,104 @@ public static class Message
     }
 
     /// <summary>
+    /// 根据字符（大概）占用宽度截取指定占用宽度字符串
+    /// </summary>
+    /// <param name="line">字符串</param>
+    /// <param name="width">占用宽度</param>
+    /// <returns></returns>
+    private static string substringWidthCount(this string line, int width, int left, out int actualLeft)
+    {
+        actualLeft = 0;
+        if (width < 0 || width / 2 > line.Length) return line;
+
+        actualLeft = left;
+        var count = 0;
+        for (var i = left; i < line.Length; i++)
+        {
+            var c = line[i];
+            if (c > 0 && c < 255)
+            {
+                width--;
+            }
+            else
+            {
+                width -= 2;
+            }
+            count++;
+
+            if (width < 0) break;
+        }
+
+        if (width >= 0)
+        {
+            for (var i = left; i > 0; i--)
+            {
+                var c = line[i - 1];
+                if (c > 0 && c < 255)
+                {
+                    width--;
+                }
+                else
+                {
+                    width -= 2;
+                }
+                count++;
+                left--;
+                if (width < 0) break;
+            }
+            actualLeft = left;
+        }
+
+        return (count < line.Length ? line.Substring(left, count) : line) + " ";
+    }
+
+    /// <summary>
     /// 设置菜单选项
     /// </summary>
     /// <param name="selected">选中的菜单行数</param>
     /// <param name="itemNum">显示的菜单行数</param>
     /// <param name="itemString">显示的菜单行文本</param>
     /// <param name="top">菜单起始位置</param>
-    private static void ShowOptionString(int selected, int itemNum, string itemString, int top)
+    /// <returns>实际left</returns>
+    private static int showOptionString(int selected, int itemNum, string itemString, int top, int left = 0)
     {
+        var option = $"{itemString.TrimEnd()}".substringWidthCount(Console.WindowWidth - $" ->{itemNum}:".Length - 3, left, out int actualLeft);
+
         if (selected == itemNum)
         {
-            Write($" ->{itemNum}:{itemString}", 0, top + itemNum, ConsoleColor.Red);
+            Write($" ->{itemNum}:{option}", 0, top + itemNum, ConsoleColor.Red);
         }
         else
         {
-            Write($"   {itemNum}:{itemString}", 0, top + itemNum, ConsoleColor.White);
+            Write($"   {itemNum}:{option}", 0, top + itemNum, ConsoleColor.White);
         }
+
+        return actualLeft;
     }
+
+    /// <summary>
+    /// 显示菜单文本
+    /// </summary>
+    /// <param name="select"></param>
+    /// <param name="top"></param>
+    /// <param name="menus"></param>
+    private static void showMenuString(int select, int top, string[] menus)
+    {
+        WriteLine(menus[0]);
+
+        for (var i = 1; i < menus.Length; i++)
+        {
+            showOptionString(select, i, menus[i], top);
+        }
+
+        WriteLine("");
+        Write(Language.GetMessage(Language.MessageEnum.MenuSelected));
+    }
+
+    /// <summary>
+    /// 屏幕宽度
+    /// </summary>
+    private static int consoleWindowWidth = 0;
 
     /// <summary>
     /// 显示选择菜单（等待选择）
@@ -304,24 +386,37 @@ public static class Message
         if (select > maxNum) select = maxNum;
         if (select < 1) select = 1;
         selected = select;
+        var left = 0;
+        var lefted = 0;
+        var top = 0;
+        var left1 = 0;
+        var top1 = 0;
 
-        Clear();
-        GetPos(out _, out var top);
-        WriteLine(menus[0]);
-
-        for (var i = 1; i < menus.Length; i++)
-        {
-            ShowOptionString(select, i, menus[i], top);
-        }
-
-        WriteLine("");
-        Write(Language.GetMessage(Language.MessageEnum.MenuSelected));
-        GetPos(out var left, out var top1);
-        Write(select.ToString());
-
+        consoleWindowWidth = 0;
         while (true)
         {
+            if (consoleWindowWidth != Console.WindowWidth)
+            {
+                left = 0;
+                consoleWindowWidth = Console.WindowWidth;
+                Clear();
+                GetPos(out _, out top);
+                showMenuString(select, top, menus);
+                GetPos(out left1, out top1);
+                if (maxNum < Console.WindowHeight)
+                {
+                    Write(select.ToString(), left1, top1);
+                }
+                else
+                {
+                    SetPos(0, 0);
+                    SetPos(0, top1);
+                    SetPos(0, top + select);
+                }
+            }
+
             var key = Wait();
+
             if (key.Key == ConsoleKey.Enter)
             {
                 break;
@@ -329,15 +424,27 @@ public static class Message
             switch (key.Key)
             {
                 case ConsoleKey.DownArrow:
-                    if (select < maxNum) select++;
+                    select++;
                     break;
                 case ConsoleKey.UpArrow:
-                    if (select > 1) select--;
+                    select--;
+                    break;
+                case ConsoleKey.RightArrow:
+                    left++;
+                    break;
+                case ConsoleKey.LeftArrow:
+                    left--;
                     break;
                 case ConsoleKey.PageDown:
-                    select = maxNum;
+                    select += 5;
                     break;
                 case ConsoleKey.PageUp:
+                    select -= 5;
+                    break;
+                case ConsoleKey.End:
+                    select = maxNum;
+                    break;
+                case ConsoleKey.Home:
                     select = 1;
                     break;
                 default:
@@ -351,12 +458,27 @@ public static class Message
                     break;
             }
 
-            if (selected != select)
+            if (select > maxNum) select = maxNum;
+            else if (select < 1) select = 1;
+
+            if (left < 0) left = 0;
+            else if (left > menus[select].Length) left = menus[select].Length;
+
+            if (selected != select || lefted != left)
             {
-                ShowOptionString(select, selected, menus[selected], top);
-                ShowOptionString(select, select, menus[select], top);
+                if (selected != select)
+                {
+                    left = 0;
+                    showOptionString(select, selected, menus[selected], top);
+                    showOptionString(select, select, menus[select], top);
+                }
+                else
+                {
+                    left = showOptionString(select, select, menus[select], top, left);
+                }
                 selected = select;
-                Write(select.ToString(), left, top1);
+                lefted = left;
+                if (maxNum < Console.WindowHeight) Write(select.ToString(), left1, top1);
             }
         }
 

@@ -106,6 +106,7 @@ public static class Language
         SaveToFile,
         Status,
         Default,
+        Show,
     }
 
     private static void Initialize_en()
@@ -232,7 +233,7 @@ FileKEY [path] [key] [-0tcms]
         var allMsg = new List<string>();
         foreach (var msg in messages)
         {
-            allMsg.Add($"{msg.Key}={msg.Value}{Environment.NewLine}");
+            allMsg.Add($"{msg.Key}={msg.Value}");
         }
         return allMsg;
     }

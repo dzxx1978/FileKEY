@@ -2,7 +2,7 @@
 
 try
 {
-    await new MenuConfig().ShowMenu(args);
+    new MenuConfig().ShowMenu(args);
 }
 catch (Exception ex)
 {

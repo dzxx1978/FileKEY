@@ -11,7 +11,7 @@ public class MenuConfig
     /// 显示配置项主菜单
     /// </summary>
     /// <param name="args"></param>
-    public async Task ShowMenu(string[]? args = null)
+    public void ShowMenu(string[]? args = null)
     {
         if (args is not null && args.Length > 0)
         {
@@ -59,11 +59,11 @@ public class MenuConfig
                     break;
                 case 5:
                     Message.WriteLine(GetConfigString(options));
-                    Message.Wait();
+                    Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
                     break;
                 case 6:
                     Message.WriteLine(GetHelpShown());
-                    Message.Wait();
+                    Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
                     break;
                 case 7:
                     options.Clear();
@@ -84,7 +84,7 @@ public class MenuConfig
     {
         var languages = GetLanguages();
 
-        var languageSelected = languages.Count + 1;
+        var menuSelected = languages.Count + 1;
         var menuOptions = new string[] { };
         var configType = ConfigType.Language;
 
@@ -101,29 +101,31 @@ public class MenuConfig
                 GetMessage(MessageEnum.SaveToFile),
                 GetMessage(MessageEnum.MenuClose),
             ];
-            languageSelected = Message.ShowSelectMenu(languageSelected, menuOptions);
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
-            if (languageSelected <= languages.Count)
+            if (menuSelected <= languages.Count)
             {
-                Message.Write($"{languageSelected}/{languages.Count} {languages[languageSelected - 1]}");
-                var readLanguage = Message.ReadString("=");
-
+                var readLanguage = Message.ReadString("=>");
                 if (!string.IsNullOrEmpty(readLanguage))
                 {
-                    languages[languageSelected - 1] = $"{languages[languageSelected - 1].Split('=')[0]}={readLanguage}";
+                    languages[menuSelected - 1] = $"{languages[menuSelected - 1].Split('=')[0]}={readLanguage}";
                 }
+            }
+            else if (menuSelected == menuOptions.Count() - 1)
+            {
+                break;
             }
             else {
                 Message.WriteLine(configFilePath);
                 var consoleKey = Message.Wait(GetMessage(MessageEnum.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
                 if (consoleKey.Key != ConsoleKey.Y)
-                    return false;
+                    break;
 
                 SaveConfigFile(configFilePath, languages.ToArray());
 
                 return true;
             }
-        } while (languageSelected < menuOptions.Count() - 1);
+        } while (menuSelected < menuOptions.Count() - 1);
 
         return false;
     }
@@ -166,23 +168,29 @@ public class MenuConfig
 
                         var setOrDel = Message.ShowSelectMenu(0, [
                             selectedLanguageFilePath,
-                            GetMessage(MessageEnum.Set),//1
-                            GetMessage(MessageEnum.Del),//2
-                            GetMessage(MessageEnum.Default),//3
+                            GetMessage(MessageEnum.Show),//1
+                            GetMessage(MessageEnum.Set),//2
+                            GetMessage(MessageEnum.Del),//3
+                            GetMessage(MessageEnum.Default),//4
                             GetMessage(MessageEnum.MenuClose),
                         ]);
 
                         switch (setOrDel)
                         {
                             case 1:
-                                Initialize(GetConfigName(configType, selectedLanguageFilePath));
+                                var language = LoadConfigFile(selectedLanguageFilePath);
+                                Message.WriteLine(GetConfigString(language.ToList()));
+                                Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
                                 break;
                             case 2:
-                                DeleteConfigFile(selectedLanguageFilePath);
+                                Initialize(GetConfigName(configType, selectedLanguageFilePath));
                                 break;
                             case 3:
+                                DeleteConfigFile(selectedLanguageFilePath);
+                                break;
+                            case 4:
                                 CopyToDefaultConfigFile(selectedLanguageFilePath);
-                                goto case 1;
+                                goto case 2;
                         }
 
                     }
@@ -236,24 +244,29 @@ public class MenuConfig
                 var setOrDel = Message.ShowSelectMenu(0,
                     [
                         configFilePath,
-                        GetMessage(MessageEnum.Set),//1
-                        GetMessage(MessageEnum.Del),//2
-                        GetMessage(MessageEnum.Default),//3
+                        GetMessage(MessageEnum.Show),//1
+                        GetMessage(MessageEnum.Set),//2
+                        GetMessage(MessageEnum.Del),//3
+                        GetMessage(MessageEnum.Default),//4
                         GetMessage(MessageEnum.MenuClose),
                     ]);
 
                 switch (setOrDel)
                 {
                     case 1:
-                        options = LoadConfigFile(configFilePath).ToList();
-
-                        Message.WriteLine(GetConfigString(options));
-                        Message.Wait();
+                        var language = LoadConfigFile(configFilePath).ToList();
+                        Message.WriteLine(GetConfigString(language));
+                        Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
                         break;
                     case 2:
-                        DeleteConfigFile(configFilePath);
+                        options = LoadConfigFile(configFilePath).ToList();
+                        Message.WriteLine(GetConfigString(options));
+                        Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
                         break;
                     case 3:
+                        DeleteConfigFile(configFilePath);
+                        break;
+                    case 4:
                         CopyToDefaultConfigFile(configFilePath);
                         break;
                 }
@@ -424,10 +437,10 @@ public class MenuConfig
                     optionsRemove(AppStatus.Command_GroupBy, 2);
                     break;
                 case 2:
-                    optionsRemoveAndAdd(AppStatus.Command_GroupBy, AppStatus.CommandValue_Type);
+                    optionsReplaceOrAdd(AppStatus.Command_GroupBy, AppStatus.CommandValue_Type);
                     break;
                 case 3:
-                    optionsRemoveAndAdd(AppStatus.Command_GroupBy, AppStatus.CommandValue_Hash);
+                    optionsReplaceOrAdd(AppStatus.Command_GroupBy, AppStatus.CommandValue_Hash);
                     break;
             }
 
@@ -688,14 +701,46 @@ public class MenuConfig
     private bool optionsRemoveAndAdd(params string[] items)
     {
         if (items is null || items.Length == 0) return false;
-        optionsRemove(items[0], items.Length);
 
+        optionsRemove(items[0], items.Length);
         foreach (var item in items)
         {
             options.Add(item);
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// 替换或新增项目和值，并返回被替换的值
+    /// </summary>
+    /// <param name="items"></param>
+    /// <returns></returns>
+    private string optionsReplaceOrAdd(params string[] items)
+    {
+        if (items is null || items.Length == 0 || string.IsNullOrEmpty(items[0])) return string.Empty;
+
+        var outOption = "";
+        var itemsIndex = options.IndexOf(items[0]);
+        if (itemsIndex >= 0)
+        {
+            if (itemsIndex + items.Length > options.Count) return string.Empty;
+
+            for (var i = 1; i < items.Length; i++)
+            {
+                if (i == items.Length) outOption = options[itemsIndex + i];
+                options[itemsIndex + i] = items[i];
+            }
+        }
+        else
+        {
+            foreach (var item in items)
+            {
+                options.Add(item);
+            }
+        }
+
+        return outOption;
     }
 
     private void setDefaultConfig()
