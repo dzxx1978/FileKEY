@@ -88,7 +88,7 @@ public class MenuConfig
         do
         {
             menuOptions = [
-                GetMessage(MessageEnum.Language),
+                GetMessage(MessageEnum.Edit) + ">" + GetMessage(MessageEnum.Type),
                 .. types,//1...
                 GetMessage(MessageEnum.Add),//-3
                 GetMessage(MessageEnum.SaveToFile),//-2
@@ -137,8 +137,8 @@ public class MenuConfig
         return false;
     }
 
-    private string EditTypeItem(string item = "") {
-
+    private string EditTypeItem(string item = "")
+    {
         var typeID = "";
         var typeNames = new List<string>();
 
@@ -146,18 +146,19 @@ public class MenuConfig
         {
             typeID = item.Split('=')[0];
             typeNames = item.Substring(typeID.Length + 1).Split(';').Select(p => p.Trim()).ToList();
+            Message.WriteLine($"{GetMessage(MessageEnum.Edit)} {GetMessage(MessageEnum.Type)} ID:");
         }
         else
         {
-            typeID = Message.ReadString("+>");
+            Message.WriteLine($"{GetMessage(MessageEnum.Add)} {GetMessage(MessageEnum.Type)} ID:");
+            typeID = Message.ReadString("+0>");
         }
         if (string.IsNullOrEmpty(typeID)) return item;
 
         Message.WarningLine(typeID, false);
         for (var i = 0; i < typeNames.Count; i++)
         {
-            Message.WriteLine(typeNames[i]);
-            var newType = Message.ReadString("=>");
+            var newType = Message.ReadString($"{typeNames[i]}={i + 1}>");
             if (!string.IsNullOrEmpty(newType))
             {
                 typeNames[i] = newType;
@@ -166,7 +167,7 @@ public class MenuConfig
 
         while (true)
         {
-            var newType = Message.ReadString("+>");
+            var newType = Message.ReadString($"+{typeNames.Count + 1}>");
             if (!string.IsNullOrEmpty(newType))
             {
                 typeNames.Add(newType);
@@ -201,7 +202,7 @@ public class MenuConfig
         do
         {
             menuOptions = [
-                GetMessage(MessageEnum.Language),
+                GetMessage(MessageEnum.Edit) + ">" + GetMessage(MessageEnum.Language),
                 .. languages,//1...
                 GetMessage(MessageEnum.SaveToFile),
                 GetMessage(MessageEnum.MenuClose),
@@ -476,7 +477,7 @@ public class MenuConfig
             var configFiles = GetConfigFiles(configType);
 
             menuOptions = [
-                GetMessage(MessageEnum.Type),
+                GetMessage(MessageEnum.Edit) + ">" + GetMessage(MessageEnum.Type),
                 GetMessage(MessageEnum.SaveCurrentOptions),//1
                 .. GetConfigFileNames(configFiles),//2
                 GetMessage(MessageEnum.MenuClose),
