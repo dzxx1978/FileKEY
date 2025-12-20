@@ -78,6 +78,32 @@ namespace TestProject
         }
 
         [Fact]
+        public async Task CacheDog()
+        {
+            var args = new List<string>
+            {
+                imageDogPath,
+                AppStatus.Command_Cache,
+                AppStatus.CommandValue_True,
+            };
+
+            AppStatus.SetOptions(args.ToArray());
+
+            await new Desktop().GanHuoer();
+
+            var output = writer.ToString();
+
+            var fileKey = new FileKey(false, false, false, true);
+            var dogHash = fileKey.GetStringSha256(Path.GetFullPath(imageDogPath));
+            var dogInfo = fileKey.GetCacheHash(dogHash);
+
+            Assert.True(dogInfo is not null);
+            Assert.True(dogInfo.Length == 6);
+            Assert.True(!string.IsNullOrEmpty(dogInfo[5]));
+            Assert.Contains(dogInfo[5], output);
+        }
+
+        [Fact]
         public void LoadTestLanguage()
         {
             var languageFile = ConfigFile.GetNewConfigFilePath(ConfigFile.ConfigTypeEnum.Language, "test");

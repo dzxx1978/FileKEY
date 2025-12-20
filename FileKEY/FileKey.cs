@@ -92,24 +92,31 @@ public class FileKey
         key.Length = fileInfo.Length;
         key.Time = fileInfo.LastWriteTime;
 
+        var infoHash = "";
+        var fileCache = new string[6];
         if (AppStatus.IsCache)
         {
-            // TODO cache
+            infoHash = GetStringSha256($"{fileInfo.FullName}");
+            fileCache = GetCacheHash(infoHash);
+            if (fileCache.Length != 6 || fileCache[0] != key.Length.ToString() || fileCache[1] != key.Time.ToString("yyyy-MM-dd HH:mm:ss"))
+            {
+                fileCache = new string[6];
+            }
         }
 
         try
         {
             //type
-            var taskType = GetFileType(filePath, cancellationToken);
+            var taskType = GetFileType(filePath, fileCache[2], cancellationToken);
 
             //CRC
-            var taskCrc = GetFileCRC(filePath, cancellationToken);
+            var taskCrc = GetFileCRC(filePath, fileCache[3], cancellationToken);
 
             //md5
-            var taskMd5 = GetFileMD5(filePath, cancellationToken);
+            var taskMd5 = GetFileMD5(filePath, fileCache[4], cancellationToken);
 
             //sha
-            var taskSha256 = GetFileSha256(filePath, cancellationToken);
+            var taskSha256 = GetFileSha256(filePath, fileCache[5], cancellationToken);
 
             await Task.WhenAll(taskType, taskCrc, taskMd5, taskSha256);
 
@@ -125,11 +132,42 @@ public class FileKey
             key.Exists = false;
         }
 
+        if (AppStatus.IsCache)
+        {
+            SetCacheHash(infoHash, 
+                key.Length.ToString(), 
+                key.Time.ToString("yyyy-MM-dd HH:mm:ss"), 
+                key.TypeName,
+                key.Crc32Hash.ToString(),
+                key.Md5Normalized,
+                key.Sha256Normalized);
+        }
+
         return key;
     }
 
-    public async Task<string> GetFileMD5(string filePath, CancellationToken cancellationToken = default)
+    public string[] GetCacheHash(string infoHash)
     {
+        var cacheHashFilePath = ConfigFile.GetCacheFilePath(infoHash);
+        return ConfigFile.LoadConfigFile(cacheHashFilePath);
+    }
+
+    private void SetCacheHash(string infoHash, params string[] fileKeyInfos)
+    {
+        var cacheHashFilePath = ConfigFile.GetCacheFilePath(infoHash);
+        ConfigFile.SaveConfigFile(cacheHashFilePath, fileKeyInfos);
+    }
+
+
+    public string GetStringSha256(string info) {
+        var bytes = Encoding.UTF8.GetBytes(info);
+        using var sha256 = SHA256.Create();
+        return BitConverter.ToString(sha256.ComputeHash(bytes));
+    }
+
+    public async Task<string> GetFileMD5(string filePath, string cache, CancellationToken cancellationToken = default)
+    {
+        if (!string.IsNullOrEmpty(cache)) return cache;
         if (!outMd5Option) return string.Empty;
 
         using var fileStream = File.OpenRead(filePath);
@@ -137,8 +175,9 @@ public class FileKey
         return BitConverter.ToString(await md5.ComputeHashAsync(fileStream, cancellationToken));
     }
 
-    public async Task<string> GetFileSha256(string filePath, CancellationToken cancellationToken = default)
+    public async Task<string> GetFileSha256(string filePath, string cache, CancellationToken cancellationToken = default)
     {
+        if (!string.IsNullOrEmpty(cache)) return cache;
         if (!outSha256Option) return string.Empty;
 
         using var fileStream = File.OpenRead(filePath);
@@ -146,11 +185,12 @@ public class FileKey
         return BitConverter.ToString(await sha256.ComputeHashAsync(fileStream, cancellationToken));
     }
 
-    public async Task<uint> GetFileCRC(string filePath, CancellationToken cancellationToken = default)
+    public async Task<uint> GetFileCRC(string filePath, string cache, CancellationToken cancellationToken = default)
     {
+        if (!string.IsNullOrEmpty(cache) && uint.TryParse(cache, out uint crc)) return crc;
         if (!outCrcOption) return 0;
 
-        uint crc = 0xFFFFFFFF;
+        crc = 0xFFFFFFFF;
         var buffer = new byte[8192];
 
         using var fileStream = File.OpenRead(filePath);
@@ -171,8 +211,9 @@ public class FileKey
 
     }
 
-    public async Task<string> GetFileType(string filePath, CancellationToken cancellationToken = default)
+    public async Task<string> GetFileType(string filePath, string cache, CancellationToken cancellationToken = default)
     {
+        //if (!string.IsNullOrEmpty(cache)) return cache;
         if (!outTypeOption) return string.Empty;
 
         var buffer = new byte[16];

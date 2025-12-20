@@ -49,6 +49,70 @@ public static class ConfigFile
     }
 
     /// <summary>
+    /// 获取配置文件完整路径
+    /// </summary>
+    /// <param name="configType">配置类型</param>
+    /// <param name="configName">配置名称</param>
+    /// <param name="disableNames">禁用配置名称列表</param>
+    /// <returns></returns>
+    public static string GetNewConfigFilePath(ConfigTypeEnum configType, string configName, string[]? disableNames = null)
+    {
+
+        var configFileName = configName;
+        var configTypeStr = configType.ToString();
+
+        if (string.IsNullOrEmpty(configFileName))
+        {
+            configFileName = "Custom";
+        }
+        else
+        {
+            if (configFileName.StartsWith($"{configTypeStr}_", StringComparison.OrdinalIgnoreCase))
+            {
+                configFileName = configFileName.Substring(configTypeStr.Length + 1);
+            }
+            configFileName = configFileName.Split('.')[0];
+
+            if (disableNames is not null)
+            {
+                foreach (var disableName in disableNames)
+                {
+                    if (configFileName.Equals(disableName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        configFileName = "Custom";
+                        break;
+                    }
+                }
+            }
+        }
+        configFileName = $"{configTypeStr}_{configFileName}.txt".Replace("--", "-").Replace("__", "_").Replace("_-", "_");
+        var configFilePath = Path.Combine(GetConfigRootPath(configTypeStr), configFileName);
+
+        return configFilePath;
+    }
+
+    /// <summary>
+    /// 获取缓存文件根目录
+    /// </summary>
+    /// <param name="infoHash"></param>
+    /// <returns></returns>
+    public static string GetCacheFilePath(string infoHash)
+    {
+        var infoHashSub = infoHash.ToArray().Sum(p => p) % 100;
+
+        var dateRootPath = ConfigFile.GetConfigRootPath(ConfigFile.ConfigTypeEnum.Data.ToString());
+        var cacheHashFilePath = Path.Combine(dateRootPath, infoHashSub.ToString("000"));
+        if (!Directory.Exists(cacheHashFilePath))
+        {
+            Directory.CreateDirectory(cacheHashFilePath);
+        }
+        cacheHashFilePath = Path.Combine(cacheHashFilePath, infoHash);
+
+        return cacheHashFilePath;
+
+    }
+
+    /// <summary>
     /// 获取配置文件列表（完整路径和文件名）
     /// </summary>
     /// <param name="configType">配置类型</param>
@@ -99,49 +163,6 @@ public static class ConfigFile
         }
 
         return optionsString.ToString();
-    }
-
-    /// <summary>
-    /// 获取配置文件完整路径
-    /// </summary>
-    /// <param name="configType">配置类型</param>
-    /// <param name="configName">配置名称</param>
-    /// <param name="disableNames">禁用配置名称列表</param>
-    /// <returns></returns>
-    public static string GetNewConfigFilePath(ConfigTypeEnum configType, string configName, string[]? disableNames = null)
-    {
-
-        var configFileName = configName;
-        var configTypeStr = configType.ToString();
-
-        if (string.IsNullOrEmpty(configFileName))
-        {
-            configFileName = "Custom";
-        }
-        else
-        {
-            if (configFileName.StartsWith($"{configTypeStr}_", StringComparison.OrdinalIgnoreCase))
-            {
-                configFileName = configFileName.Substring(configTypeStr.Length + 1);
-            }
-            configFileName = configFileName.Split('.')[0];
-
-            if (disableNames is not null)
-            {
-                foreach (var disableName in disableNames)
-                {
-                    if (configFileName.Equals(disableName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        configFileName = "Custom";
-                        break;
-                    }
-                }
-            }
-        }
-        configFileName = $"{configTypeStr}_{configFileName}.txt".Replace("--", "-").Replace("__", "_").Replace("_-", "_");
-        var configFilePath = Path.Combine(GetConfigRootPath(configTypeStr), configFileName);
-
-        return configFilePath;
     }
 
     /// <summary>
