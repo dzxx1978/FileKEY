@@ -221,7 +221,8 @@ public class MenuConfig
             {
                 break;
             }
-            else {
+            else
+            {
                 Message.WriteLine(configFilePath);
                 var consoleKey = Message.Wait(GetMessage(MessageEnum.SaveToFile) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
                 if (consoleKey.Key != ConsoleKey.Y)
@@ -231,6 +232,7 @@ public class MenuConfig
 
                 return true;
             }
+
         } while (menuSelected < menuOptions.Count() - 1);
 
         return false;

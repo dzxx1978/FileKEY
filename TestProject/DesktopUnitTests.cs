@@ -63,6 +63,21 @@ namespace TestProject
         }
 
         [Fact]
+        public void CacheTrue()
+        {
+            var args = new List<string>
+            {
+                AppStatus.Command_Cache,
+                AppStatus.CommandValue_True,
+            };
+
+            AppStatus.SetOptions(args.ToArray());
+
+            Assert.True(AppStatus.IsCache);
+
+        }
+
+        [Fact]
         public void LoadTestLanguage()
         {
             var languageFile = ConfigFile.GetNewConfigFilePath(ConfigFile.ConfigTypeEnum.Language, "test");

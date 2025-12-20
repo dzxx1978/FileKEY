@@ -115,6 +115,10 @@ public static class AppStatus
     /// </summary>
     public static bool IsHideMenu { get; private set; }
 
+    /// <summary>
+    /// 是否使用缓存数据
+    /// </summary>
+    public static bool IsCache { get; private set; }
 
     public enum FileTypeEnum
     {
@@ -185,6 +189,7 @@ public static class AppStatus
         IsDetailedDisplay = true;
         IsHelpShownAndExit = false;
         IsHideMenu = false;
+        IsCache = false;
     }
 
     private enum Option
@@ -209,6 +214,9 @@ public static class AppStatus
         Type,
         Hash,
         Noth,
+        __Cache,
+        True,
+        False,
     }
 
     private static string ToCommand(this Option option)
@@ -232,10 +240,14 @@ public static class AppStatus
     public static string Command_GroupMinCount => Option.__GroupMinCount.ToCommand();
     public static string Command_SubDirectory => Option.__SubDirectory.ToCommand();
     public static string Command_Language => Option.__Language.ToCommand();
+    public static string Command_Cache => Option.__Cache.ToCommand();
 
     public static string CommandValue_Type => Option.Type.ToString();
     public static string CommandValue_Hash => Option.Hash.ToString();
     public static string CommandValue_Noth => Option.Noth.ToString();
+
+    public static string CommandValue_True => Option.True.ToString();
+    public static string CommandValue_False => Option.False.ToString();
 
     /// <summary>
     /// 转换配置到命令行参数列表
@@ -320,6 +332,12 @@ public static class AppStatus
         {
             options.Add(Command_SubDirectory);
             options.Add(SubDirectory.ToString());
+        }
+
+        if (IsCache)
+        {
+            options.Add(Command_Cache);
+            options.Add(IsCache.ToString());
         }
 
         return options;
@@ -451,6 +469,17 @@ public static class AppStatus
                         }
 
                         GroupMinCount = groupMinCount;
+
+                    }
+                    else if (parameter == Command_Cache)
+                    {
+                        i++;
+                        if (i >= options.Length || !options[i].Equals(CommandValue_True, StringComparison.OrdinalIgnoreCase) && !options[i].Equals(CommandValue_True, StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new Exception(GetMessage(MessageEnum.ParameterError, parameter.Substring(1), $"<{CommandValue_True}|{CommandValue_False}>"));
+                        }
+
+                        IsCache = options[i].Equals(CommandValue_True, StringComparison.OrdinalIgnoreCase) ? true : false;
 
                     }
                     else if (parameter == Command_ShowMenu)

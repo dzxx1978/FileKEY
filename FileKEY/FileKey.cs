@@ -92,6 +92,11 @@ public class FileKey
         key.Length = fileInfo.Length;
         key.Time = fileInfo.LastWriteTime;
 
+        if (AppStatus.IsCache)
+        {
+            // TODO cache
+        }
+
         try
         {
             //type
