@@ -31,15 +31,21 @@ public static class ConfigFile
             confitType = ConfigTypeEnum.Default.ToString();
         }
 
+        var appName = Assembly.GetExecutingAssembly().GetName().Name ?? typeof(ConfigFile).Namespace ?? "FileKEY";
+        appName += "Config";
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var appName = Assembly.GetExecutingAssembly().GetName().Name ?? typeof(ConfigFile).Namespace;
-        var configRootPath = Path.Combine(appDataPath, appName!, confitType);
+        var configRootPath = Path.Combine(appDataPath, appName);
+        var typeConfigRootPath = Path.Combine(configRootPath, confitType);
         if (!Directory.Exists(configRootPath))
         {
             Directory.CreateDirectory(configRootPath);
         }
+        if (!Directory.Exists(typeConfigRootPath))
+        {
+            Directory.CreateDirectory(typeConfigRootPath);
+        }
 
-        return configRootPath;
+        return typeConfigRootPath;
     }
 
     /// <summary>

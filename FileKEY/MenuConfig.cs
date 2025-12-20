@@ -192,7 +192,7 @@ public class MenuConfig
     {
         var languages = GetLanguages();
 
-        var menuSelected = languages.Count + 1;
+        var menuSelected = 0;
         var menuOptions = Array.Empty<string>();
         var configType = ConfigTypeEnum.Language;
 
