@@ -385,12 +385,14 @@ public static class Message
 
         if (pageCount > 1)
         {
-            var col = consoleWindowWidth - 1;
-            for (var i = pageCount; i > 0; i--)
+            Write(" [");
+            for (var i = 1; i <= pageCount; i++)
             {
-                col--;
-                Write(i.ToString(), col, beginTop, i == page ? ConsoleColor.Red : ConsoleColor.Gray);
+                Write($"{i}", i == page ? ConsoleColor.Red : ConsoleColor.Gray);
+                if (i < pageCount)
+                    Write($"|");
             }
+            Write("]");
         }
 
         for (var i = index; i < end; i++)
@@ -409,7 +411,9 @@ public static class Message
     /// 屏幕宽度
     /// </summary>
     private static int consoleWindowWidth = 0;
-
+    /// <summary>
+    /// 菜单每页显示项目行数
+    /// </summary>
     private static int menuPageSize = 0;
 
     /// <summary>
