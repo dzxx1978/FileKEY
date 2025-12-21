@@ -27,6 +27,7 @@ public class MenuConfig
         }
         options = AppStatus.GetOptions();
 
+        Message.Clear();
         var menuOptions = Array.Empty<string>();
         var menuSelected = 0;
 
@@ -62,12 +63,18 @@ public class MenuConfig
                 case 5:
                     Message.WriteLine(GetConfigString(options));
                     Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
+                    Message.Clear();
                     break;
                 case 6:
                     Message.WriteLine(GetHelpShown());
                     Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
+                    Message.Clear();
                     break;
                 case 7:
+                    Message.WriteLine(GetConfigString(options));
+                    var consoleKey = Message.Wait(GetMessage(MessageEnum.MenuReSet) + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
+                    if (consoleKey.Key != ConsoleKey.Y)
+                        break;
                     options.Clear();
                     Initialize();
                     break;
@@ -547,6 +554,7 @@ public class MenuConfig
         var config = LoadConfigFile(configFilePath).ToList();
         Message.WriteLine(GetConfigString(config));
         Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
+        Message.Clear();
     }
 
     /// <summary>
@@ -565,8 +573,9 @@ public class MenuConfig
                 AppStatus.Command_GroupBy.Substring(2),//"GroupBy",//2
                 AppStatus.Command_GroupMinCount.Substring(2),//"GroupMinCount",//3
                 AppStatus.Command_SubDirectory.Substring(2),//"SubDirectory",//4
-                GetMessage(MessageEnum.Hash),//5
-                GetMessage(MessageEnum.Display),//6
+                AppStatus.Command_Cache.Substring(2),//"Cache",//5
+                GetMessage(MessageEnum.Hash),//6
+                GetMessage(MessageEnum.Display),//7
                 GetMessage(MessageEnum.MenuClose),
             ];
             menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
@@ -586,9 +595,12 @@ public class MenuConfig
                     readConsoleSubDirectoryOptions();
                     break;
                 case 5:
-                    showMenuHashOptions();
+                    readConsoleCacheOptions();
                     break;
                 case 6:
+                    showMenuHashOptions();
+                    break;
+                case 7:
                     showMenuDisplayOptions();
                     break;
             }
@@ -618,7 +630,8 @@ public class MenuConfig
                 GetMessage(MessageEnum.MenuClose),
             ];
 
-            menuSelected = Message.ShowSelectMenu(groupBy.Equals(AppStatus.CommandValue_Type, StringComparison.OrdinalIgnoreCase) ? 2 : groupBy.Equals(AppStatus.CommandValue_Hash, StringComparison.OrdinalIgnoreCase) ? 3 : 0, menuOptions);
+            menuSelected = groupBy.Equals(AppStatus.CommandValue_Type, StringComparison.OrdinalIgnoreCase) ? 2 : groupBy.Equals(AppStatus.CommandValue_Hash, StringComparison.OrdinalIgnoreCase) ? 3 : 0;
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
 
             switch (menuSelected)
             {
@@ -720,7 +733,7 @@ public class MenuConfig
     private void readConsoleGroupMinCountOptions()
     {
         var groupMinCount = optionsRemove(AppStatus.Command_GroupMinCount, 2);
-        int.TryParse(groupMinCount, out int outNum);
+        if (!int.TryParse(groupMinCount, out int outNum)) outNum = 1;
 
         groupMinCount = Message.ReadNumber(GetMessage(MessageEnum.PleaseEnterTheMinimumNumberOfGroupsToDisplay, outNum), defaultValue: outNum);
         var isNum = int.TryParse(groupMinCount, out outNum);
@@ -748,6 +761,54 @@ public class MenuConfig
             options.Add(AppStatus.Command_SubDirectory);
             options.Add(outNum.ToString());
         }
+    }
+
+    private void readConsoleCacheOptions()
+    {
+
+        var menuSelected = 0;
+        var menuOptions = Array.Empty<string>();
+
+        do
+        {
+            var cache = optionsGet(AppStatus.Command_Cache, 2);
+            if (string.IsNullOrEmpty(cache)) cache = AppStatus.CommandValue_Noth;
+
+            menuOptions = [
+                AppStatus.Command_Cache,
+                GetMessage(MessageEnum.Clear),
+                $"[{(cache.Equals(AppStatus.CommandValue_True,StringComparison.OrdinalIgnoreCase) ? AppStatus.CommandValue_True.Substring(0,1).ToUpper() : " ")}] {AppStatus.CommandValue_True}",//2
+                $"[{(cache.Equals(AppStatus.CommandValue_False,StringComparison.OrdinalIgnoreCase) ? AppStatus.CommandValue_False.Substring(0,1).ToUpper() : " ")}] {AppStatus.CommandValue_False}",//3
+                GetMessage(MessageEnum.MenuClose),
+            ];
+
+            menuSelected = cache.Equals(AppStatus.CommandValue_True, StringComparison.OrdinalIgnoreCase) ? 2 : cache.Equals(AppStatus.CommandValue_False, StringComparison.OrdinalIgnoreCase) ? 3 : 0;
+            menuSelected = Message.ShowSelectMenu(menuSelected, menuOptions);
+
+            switch (menuSelected)
+            {
+                case 1:
+
+                    var cacheRootPath = GetConfigRootPath(ConfigTypeEnum.Data.ToString());
+                    var cacheFiles = FileKey.GetSubDirectoryFiles(cacheRootPath, 1).Select(p => p.Replace(cacheRootPath, ".")).ToList();
+                    Message.WriteLine(GetConfigString(cacheFiles));
+
+                    var consoleKey = Message.Wait(GetMessage(MessageEnum.Clear) + " " + cacheFiles.Count + " " + "(y/n):", ConsoleKey.Y, ConsoleKey.N);
+                    if (consoleKey.Key != ConsoleKey.Y)
+                        break;
+
+                    Directory.Delete(GetConfigRootPath(ConfigTypeEnum.Data.ToString()), true);
+
+                    break;
+                case 2:
+                    optionsReplaceOrAdd(AppStatus.Command_Cache, AppStatus.CommandValue_True);
+                    break;
+                case 3:
+                    optionsReplaceOrAdd(AppStatus.Command_Cache, AppStatus.CommandValue_False);
+                    break;
+            }
+
+        } while (menuSelected < menuOptions.Count() - 1);
     }
 
     /// <summary>

@@ -77,7 +77,6 @@ public class Desktop
 
         if (AppStatus.IsDetailedDisplay)
             Message.WriteLine(GetMessage(MessageEnum.End));
-
     }
 
     private bool isContinue()
@@ -87,7 +86,7 @@ public class Desktop
         {
             Message.Attention(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue));
             Message.Wait("", ConsoleKey.Enter);
-            return true;
+            return false;
         }
 
         return false;
@@ -277,7 +276,7 @@ public class Desktop
         var resultFilePaths = new List<string>();
         if (isDirectory)
         {
-            return getSubDirectoryFiles(fileOrDirectoryPath, AppStatus.SubDirectory).ToArray();
+            return FileKey.GetSubDirectoryFiles(fileOrDirectoryPath, AppStatus.SubDirectory).ToArray();
         }
         else if (isFile)
         {
@@ -288,22 +287,6 @@ public class Desktop
             throw new Exception(GetMessage(MessageEnum.TheInputFilePathDoesNotExist, fileOrDirectoryPath));
         }
 
-    }
-
-    private List<string> getSubDirectoryFiles(string directoryPath, int subCount)
-    {
-        var resultFilePaths = new List<string>();
-        resultFilePaths.AddRange(Directory.GetFiles(directoryPath));
-        if (subCount > 0)
-        {
-            subCount--;
-            var subDirectories = Directory.GetDirectories(directoryPath);
-            foreach (var subDirectory in subDirectories)
-            {
-                resultFilePaths.AddRange(getSubDirectoryFiles(subDirectory, subCount));
-            }
-        }
-        return resultFilePaths;
     }
 
     private async Task<string[]> getComparisonKeys()

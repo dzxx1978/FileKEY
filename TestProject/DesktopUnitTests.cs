@@ -94,13 +94,12 @@ namespace TestProject
             var output = writer.ToString();
 
             var fileKey = new FileKey(false, false, false, true);
-            var dogHash = fileKey.GetStringSha256(Path.GetFullPath(imageDogPath));
-            var dogInfo = fileKey.GetCacheHash(dogHash);
+            var dogInfo = fileKey.GetCacheHash(Path.GetFullPath(imageDogPath));
 
             Assert.True(dogInfo is not null);
             Assert.True(dogInfo.Length == 6);
             Assert.True(!string.IsNullOrEmpty(dogInfo[5]));
-            Assert.Contains(dogInfo[5], output);
+            Assert.Contains(dogInfo[5].Replace("-", "").ToLower(), output);
         }
 
         [Fact]

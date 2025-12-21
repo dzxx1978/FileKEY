@@ -92,27 +92,6 @@ public static class ConfigFile
     }
 
     /// <summary>
-    /// 获取缓存文件根目录
-    /// </summary>
-    /// <param name="infoHash"></param>
-    /// <returns></returns>
-    public static string GetCacheFilePath(string infoHash)
-    {
-        var infoHashSub = infoHash.ToArray().Sum(p => p) % 100;
-
-        var dateRootPath = ConfigFile.GetConfigRootPath(ConfigFile.ConfigTypeEnum.Data.ToString());
-        var cacheHashFilePath = Path.Combine(dateRootPath, infoHashSub.ToString("000"));
-        if (!Directory.Exists(cacheHashFilePath))
-        {
-            Directory.CreateDirectory(cacheHashFilePath);
-        }
-        cacheHashFilePath = Path.Combine(cacheHashFilePath, infoHash);
-
-        return cacheHashFilePath;
-
-    }
-
-    /// <summary>
     /// 获取配置文件列表（完整路径和文件名）
     /// </summary>
     /// <param name="configType">配置类型</param>

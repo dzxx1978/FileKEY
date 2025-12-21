@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace FileKEY;
@@ -92,12 +93,10 @@ public class FileKey
         key.Length = fileInfo.Length;
         key.Time = fileInfo.LastWriteTime;
 
-        var infoHash = "";
         var fileCache = new string[6];
         if (AppStatus.IsCache)
         {
-            infoHash = GetStringSha256($"{fileInfo.FullName}");
-            fileCache = GetCacheHash(infoHash);
+            fileCache = GetCacheHash(fileInfo.FullName);
             if (fileCache.Length != 6 || fileCache[0] != key.Length.ToString() || fileCache[1] != key.Time.ToString("yyyy-MM-dd HH:mm:ss"))
             {
                 fileCache = new string[6];
@@ -120,10 +119,10 @@ public class FileKey
 
             await Task.WhenAll(taskType, taskCrc, taskMd5, taskSha256);
 
-            key.TypeName = taskType.Result;
-            key.Crc32Hash = taskCrc.Result;
-            key.Md5Hash = taskMd5.Result;
-            key.Sha256Hash = taskSha256.Result;
+            key.TypeName = await taskType;
+            key.Crc32Hash = await taskCrc;
+            key.Md5Hash = await taskMd5;
+            key.Sha256Hash = await taskSha256;
 
         }
         catch (Exception ex)
@@ -134,32 +133,55 @@ public class FileKey
 
         if (AppStatus.IsCache)
         {
-            SetCacheHash(infoHash, 
+            SetCacheHash(fileInfo.FullName, fileCache,
                 key.Length.ToString(), 
                 key.Time.ToString("yyyy-MM-dd HH:mm:ss"), 
                 key.TypeName,
                 key.Crc32Hash.ToString(),
-                key.Md5Normalized,
-                key.Sha256Normalized);
+                key.Md5Hash,
+                key.Sha256Hash);
         }
 
         return key;
     }
 
-    public string[] GetCacheHash(string infoHash)
+    public string[] GetCacheHash(string fileFullPath)
     {
-        var cacheHashFilePath = ConfigFile.GetCacheFilePath(infoHash);
+        var cacheHashFilePath = GetCacheFilePath(fileFullPath);
         return ConfigFile.LoadConfigFile(cacheHashFilePath);
     }
 
-    private void SetCacheHash(string infoHash, params string[] fileKeyInfos)
+    private void SetCacheHash(string fileFullPath, string[] fileCache, params string[] fileKeyInfos)
     {
-        var cacheHashFilePath = ConfigFile.GetCacheFilePath(infoHash);
+        if (fileCache.SequenceEqual(fileKeyInfos)) return; 
+
+        var cacheHashFilePath = GetCacheFilePath(fileFullPath);
         ConfigFile.SaveConfigFile(cacheHashFilePath, fileKeyInfos);
     }
 
+    /// <summary>
+    /// 获取缓存文件根目录
+    /// </summary>
+    /// <param name="infoHash"></param>
+    /// <returns></returns>
+    public string GetCacheFilePath(string fileFullPath)
+    {
+        var infoHash = GetStringSha256(fileFullPath);
+        var infoHashSub = infoHash.ToArray().Sum(p => p) % 1000;
 
-    public string GetStringSha256(string info) {
+        var dateRootPath = ConfigFile.GetConfigRootPath(ConfigFile.ConfigTypeEnum.Data.ToString());
+        var cacheHashFilePath = Path.Combine(dateRootPath, infoHashSub.ToString("000"));
+        if (!Directory.Exists(cacheHashFilePath))
+        {
+            Directory.CreateDirectory(cacheHashFilePath);
+        }
+        cacheHashFilePath = Path.Combine(cacheHashFilePath, infoHash);
+
+        return cacheHashFilePath;
+
+    }
+
+    private string GetStringSha256(string info) {
         var bytes = Encoding.UTF8.GetBytes(info);
         using var sha256 = SHA256.Create();
         return BitConverter.ToString(sha256.ComputeHash(bytes));
@@ -242,6 +264,22 @@ public class FileKey
 
         return fileType.ToString();
 
+    }
+
+    public static List<string> GetSubDirectoryFiles(string directoryPath, int subCount)
+    {
+        var resultFilePaths = new List<string>();
+        resultFilePaths.AddRange(Directory.GetFiles(directoryPath));
+        if (subCount > 0)
+        {
+            subCount--;
+            var subDirectories = Directory.GetDirectories(directoryPath);
+            foreach (var subDirectory in subDirectories)
+            {
+                resultFilePaths.AddRange(GetSubDirectoryFiles(subDirectory, subCount));
+            }
+        }
+        return resultFilePaths;
     }
 
 }

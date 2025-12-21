@@ -2,7 +2,13 @@
 
 try
 {
-    new MenuConfig().ShowMenu(args);
+    var options = args;
+    do
+    {
+        new MenuConfig().ShowMenu(options);
+        await new Desktop().GanHuoer();
+        options = Array.Empty<string>();
+    } while (!AppStatus.IsHideMenu);
 }
 catch (Exception ex)
 {
@@ -11,4 +17,4 @@ catch (Exception ex)
     return;
 }
 
-await new Desktop().GanHuoer();
+

@@ -41,7 +41,9 @@ public static class Message
     /// <param name="delSave">是否清除已存储文本（否）</param>
     public static void Clear(bool delSave = false)
     {
-        Console.Clear();
+
+        RemoveLines(0, Console.WindowHeight);
+
         if (delSave)
         {
             saveString.Clear();
