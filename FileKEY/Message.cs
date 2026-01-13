@@ -374,7 +374,7 @@ public static class Message
     /// <param name="menus"></param>
     private static void showMenuString(int select, string[] menus)
     {
-        RemoveLines();
+        RemoveAllLines();
 
         var pageCount = Convert.ToInt32(Math.Ceiling(Convert.ToDecimal(menus.Length) / menuPageSize));
         var page = Convert.ToInt32(Math.Ceiling(Convert.ToDecimal(select) / menuPageSize));
@@ -525,7 +525,7 @@ public static class Message
 
         }
 
-        RemoveLines();
+        RemoveAllLines();
         WriteLine(menus[selected]);
 
         return select;
@@ -548,7 +548,7 @@ public static class Message
     /// <param name="top">开始行</param>
     /// <param name="line">行数</param>
     /// <param name="left">行开始位置</param>
-    public static void RemoveLines(int top, int line = 1, int left = 0)
+    private static void RemoveLines(int top, int line = 1, int left = 0)
     {
         var stringLine = new string(' ', Console.WindowWidth - left);
         for (var i = top; i < line + top; i++)
@@ -558,13 +558,15 @@ public static class Message
         SetPos(left, top);
     }
 
-    private static void RemoveLines()
+    /// <summary>
+    /// 删除当前屏幕显示区域全部内容
+    /// </summary>
+    private static void RemoveAllLines()
     {
-        SetPos(0, beginTop);
         var line = new string(' ', Console.WindowWidth);
         for (var i = beginTop; i <= endTop; i++)
         {
-            WriteLine(line);
+            Write(line, 0, i);
         }
         SetPos(0, beginTop);
     }
