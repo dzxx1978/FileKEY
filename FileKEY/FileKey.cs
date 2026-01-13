@@ -1,4 +1,6 @@
-﻿using System.Security.Cryptography;
+﻿using System.IO;
+using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace FileKEY;
@@ -75,22 +77,120 @@ public class FileKey
         if (outTypeOption) InitializeFileTypes();
     }
 
-    public async Task<FileKeyInfo> GetFileKeyInfo(string filePath, CancellationToken cancellationToken = default)
+    private FileKeyInfo getFileInfo(string filePath)
     {
-        var key = new FileKeyInfo();
-        key.Path = filePath;
-
-        var fileInfo = new FileInfo(filePath);
-        if (fileInfo.Exists == false)
+        var filePaths = filePath.Split('>');
+        if (filePaths.Length < 2)
         {
-            key.ErrMessage = Language.GetMessage(Language.MessageEnum.ThereIsNoSuchFile);
-            key.Exists = false;
+            var key = new FileKeyInfo();
+            key.Path = filePath;
+
+            var fileInfo = new FileInfo(filePath);
+            if (fileInfo.Exists == false)
+            {
+                key.ErrMessage = Language.GetMessage(Language.MessageEnum.ThereIsNoSuchFile);
+                key.Exists = false;
+                return key;
+            }
+
+            key.Name = fileInfo.Name;
+            key.Length = fileInfo.Length;
+            key.Time = fileInfo.LastWriteTime;
+
             return key;
         }
 
-        key.Name = fileInfo.Name;
-        key.Length = fileInfo.Length;
-        key.Time = fileInfo.LastWriteTime;
+        var fileType = GetFileType(filePaths[0]).Result;
+
+        switch (fileType.Substring(0, 8))
+        {
+            case "504B3414"://zip
+                return getZipFileInfo(filePaths[0], filePaths[1]);
+            case "52617221"://rar
+                return getRarFileInfo(filePaths[0], filePaths[1]);
+        }
+
+        throw new NotSupportedException(Language.GetMessage(Language.MessageEnum.TheInputFilePathDoesNotExist));
+
+    }
+
+    private Stream getFileStream(string filePath)
+    {
+        var filePaths = filePath.Split('>');
+        if (filePaths.Length < 2)
+        {
+            return File.OpenRead(filePath);
+        }
+
+        var fileType = GetFileType(filePaths[0]).Result;
+
+        switch (fileType.Substring(0, 8))
+        {
+            case "504B3414"://zip
+                return getZipFileStream(filePaths[0], filePaths[1]);
+            case "52617221"://rar
+                return getRarFileStream(filePaths[0], filePaths[1]);
+        }
+
+        throw new NotSupportedException(Language.GetMessage(Language.MessageEnum.TheInputFilePathDoesNotExist));
+    }
+
+    private Stream getZipFileStream(string zipFilePath, string filePath)
+    {
+        using FileStream fs = new FileStream(zipFilePath, FileMode.Create);
+        using ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Read);
+
+        var entry = archive.GetEntry(filePath);
+        if (entry != null)
+        {
+            return entry.Open();
+        }
+
+        throw new FileNotFoundException(Language.GetMessage(Language.MessageEnum.TheInputFilePathDoesNotExist), filePath);
+    }
+
+    private FileKeyInfo getZipFileInfo(string zipFilePath, string filePath)
+    {
+        using FileStream fs = new FileStream(zipFilePath, FileMode.Create);
+        using ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Read);
+
+        var entry = archive.GetEntry(filePath);
+        if (entry != null)
+        {
+            return new FileKeyInfo()
+            {
+                Path = filePath,
+                Name = entry.Name,
+                Length = entry.Length,
+                Time = entry.LastWriteTime.DateTime,
+                Exists = true
+            };
+        }
+        else
+        {
+            return new FileKeyInfo()
+            {
+                Path = filePath,
+                ErrMessage = Language.GetMessage(Language.MessageEnum.ThereIsNoSuchFile),
+                Exists = false
+            };
+        }
+
+    }
+
+    private FileStream getRarFileStream(string rarFilePath, string filePath)
+    {
+        throw new NotImplementedException();// TODO Rar
+    }
+
+    private FileKeyInfo getRarFileInfo(string v1, string v2)
+    {
+        throw new NotImplementedException();// TODO Rar
+    }
+
+    public async Task<FileKeyInfo> GetFileKeyInfo(string filePath, CancellationToken cancellationToken = default)
+    {
+        var key = getFileInfo(filePath);
 
         if (AppStatus.IsCache)
         {
@@ -132,7 +232,7 @@ public class FileKey
     {
         if (!outMd5Option) return string.Empty;
 
-        using var fileStream = File.OpenRead(filePath);
+        using var fileStream = getFileStream(filePath);
         using var md5 = MD5.Create();
         return BitConverter.ToString(await md5.ComputeHashAsync(fileStream, cancellationToken));
     }
@@ -141,7 +241,7 @@ public class FileKey
     {
         if (!outSha256Option) return string.Empty;
 
-        using var fileStream = File.OpenRead(filePath);
+        using var fileStream = getFileStream(filePath);
         using var sha256 = SHA256.Create();
         return BitConverter.ToString(await sha256.ComputeHashAsync(fileStream, cancellationToken));
     }
@@ -153,7 +253,7 @@ public class FileKey
         uint crc = 0xFFFFFFFF;
         var buffer = new byte[8192];
 
-        using var fileStream = File.OpenRead(filePath);
+        using var fileStream = getFileStream(filePath);
 
         int bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length);
 
@@ -171,12 +271,12 @@ public class FileKey
 
     }
 
-    public async Task<string> GetFileType(string filePath, CancellationToken cancellationToken = default)
+    public async Task<string> GetFileType(string filePath, CancellationToken cancellationToken = default, bool ifGetTypeName = true)
     {
         if (!outTypeOption) return string.Empty;
 
         var buffer = new byte[16];
-        using var fileStream = File.OpenRead(filePath);
+        using var fileStream = getFileStream(filePath);
         int bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length);
 
         if (bytesRead == 0)
@@ -190,7 +290,7 @@ public class FileKey
         for (var i = 0; i < bytesRead; i++)
         {
             fileBytes.Append(buffer[i].ToString("X"));
-            if (fileTypes.ContainsKey(fileBytes.ToString()))
+            if (ifGetTypeName && fileTypes.ContainsKey(fileBytes.ToString()))
             {
                 fileType.Append($"{fileTypes[fileBytes.ToString()]}; ");
             }
