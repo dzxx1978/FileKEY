@@ -2,7 +2,7 @@
 
 namespace FileKEY;
 
-public class Desktop
+public class Desktop : IDisposable
 {
     string[]? fileFullPaths;
     string[]? comparisonKeys;
@@ -309,7 +309,7 @@ public class Desktop
 
         if (AppStatus.IsTxtFileKeys)
         {
-            comparisonKeys =  ConfigFile.LoadConfigFile(comparisonKey).ToList();
+            comparisonKeys = ConfigFile.LoadConfigFile(comparisonKey).ToList();
         }
         else if (AppStatus.IsEqualsFile)
         {
@@ -323,4 +323,8 @@ public class Desktop
         return comparisonKeys.ToArray();
     }
 
+    public void Dispose()
+    {
+        fileKey.Dispose();
+    }
 }

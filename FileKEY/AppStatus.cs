@@ -123,6 +123,8 @@ public static class AppStatus
     public enum FileTypeEnum
     {
         File,
+        ZipFile,
+        RarFile,
         Directory,
         Noth,
     }
@@ -348,7 +350,7 @@ public static class AppStatus
     /// </summary>
     /// <param name="options">参数列表</param>
     /// <exception cref="Exception"></exception>
-    public static void SetOptions(string[] options)
+    public static Desktop SetOptions(string[] options)
     {
         initialize();
 
@@ -493,7 +495,7 @@ public static class AppStatus
                         if (parameter.Contains(Command_v.Substring(1)))
                         {
                             IsHelpShownAndExit = true;
-                            return;
+                            return new();
                         }
                         if (parameter.Contains(Command_t.Substring(1)))
                         {
@@ -543,7 +545,7 @@ public static class AppStatus
 
         }
 
-        return;
+        return new();
     }
 
     public static bool SetFileOrDirectoryPath(string path, FileTypeEnum setType = FileTypeEnum.Noth, bool setHideMenu = true)
@@ -562,6 +564,10 @@ public static class AppStatus
         else if ((setType == FileTypeEnum.Noth || setType == FileTypeEnum.Directory) && Directory.Exists(path))
         {
             fileType = FileTypeEnum.Directory;
+        }
+        else if ((setType == FileTypeEnum.Noth || setType == FileTypeEnum.File) && path.Contains('>') && File.Exists(path.Split('>')[0]))
+        {
+            fileType = FileTypeEnum.File;
         }
         else
         {

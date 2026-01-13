@@ -1,9 +1,10 @@
-﻿using System.Security.Cryptography;
+﻿using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace FileKEY;
 
-public class FileKey
+public class FileKey : IDisposable
 {
     private bool isCrc32TableInitialized = false;
     private uint[] Crc32Table = new uint[256];
@@ -46,9 +47,9 @@ public class FileKey
             fileTypes.Add("FFD8FFE00104A464946", "JPEG(jpg)");//type:FFD8FFE00104A464946011001
             fileTypes.Add("89504E47", "PNG(png)");//type:89504E47DA1AA000D49484452
             fileTypes.Add("504B34A0", "Office(xlsx,docx)");//type:504B34A00000874EE24000
-            fileTypes.Add("504B3414", "Zip(zip)");         //type:504B341400080AA596D5B596D
+            fileTypes.Add("504B34", "Zip(zip)");         //type:504B341400080AA596D5B596D
             fileTypes.Add("D0CF11E0A1B11AE1", "Office(xls,doc); WindowsInstaller(msi)");//type:D0CF11E0A1B11AE100000000
-            fileTypes.Add("52617221", "Rar(rar)");//type: 526172211A710F844A420C158
+            fileTypes.Add("526172", "Rar(rar)");//type: 526172211A710F844A420C158
             fileTypes.Add("78DA63", "Image(dmg)");//type:78DA63601854318FCFBFFFF1D10332
             fileTypes.Add("4D5A", "App(exe,dll)");//type:4D5A90030004000FFFF00
             fileTypes.Add("4B444D56", "VmwareDisk(vmdk)");//type:4B444D561000300000A0 type:4B444D5610003000007F0
@@ -56,7 +57,8 @@ public class FileKey
         }
     }
 
-    public static string[] GetFileTypes() {
+    public static string[] GetFileTypes()
+    {
         return fileTypes.Select(p => $"{p.Key}={p.Value}").ToArray();
     }
 
@@ -91,54 +93,84 @@ public class FileKey
                 return key;
             }
 
+            key.FullName = fileInfo.FullName;
             key.Name = fileInfo.Name;
             key.Length = fileInfo.Length;
             key.Time = fileInfo.LastWriteTime;
+            key.ZipFile = false;
 
             return key;
         }
 
-        var fileType = GetFileType(filePaths[0]).Result;
+        var fileType = GetFileType(filePaths[0], ifGetTypeName: false).Result;
 
-        switch (fileType.Substring(0, 8))
+        switch (fileType.Substring(0, 6))
         {
-            case "504B3414"://zip
+            case "504B34"://zip
                 return getZipFileInfo(filePaths[0], filePaths[1]);
-            case "52617221"://rar
+            case "526172"://rar
                 return getRarFileInfo(filePaths[0], filePaths[1]);
         }
 
-        throw new NotSupportedException(Language.GetMessage(Language.MessageEnum.TheInputFilePathDoesNotExist));
+        throw new NotSupportedException(Language.GetMessage(Language.MessageEnum.TheInputFilePathDoesNotExist, filePath));
 
     }
 
     private Stream getFileStream(string filePath)
     {
-        var filePaths = filePath.Split('>');
-        if (filePaths.Length < 2)
+        if (!filePath.Contains('>'))
         {
             return File.OpenRead(filePath);
         }
 
-        var fileType = GetFileType(filePaths[0]).Result;
+        var filePaths = filePath.Split('>');
+        //var fileType = GetFileType(fileInfo.ZipFilePath, ifGetTypeName: false).Result;
 
-        switch (fileType.Substring(0, 8))
+        //switch (fileType.Substring(0, 6))
         {
-            case "504B3414"://zip
-                return getZipFileStream(filePaths[0], filePaths[1]);
-            case "52617221"://rar
-                return getRarFileStream(filePaths[0], filePaths[1]);
+            //    case "504B34"://zip
+            return getZipFileStream(filePaths[0], filePaths[1]);
+            //    case "526172"://rar
+            //        return getRarFileStream(fileInfo.ZipFilePath, fileInfo.FullName);
         }
 
-        throw new NotSupportedException(Language.GetMessage(Language.MessageEnum.TheInputFilePathDoesNotExist));
+        throw new NotSupportedException(Language.GetMessage(Language.MessageEnum.TheInputFilePathDoesNotExist, filePath));
+    }
+
+    FileStream? zipFileStream = null;
+    ZipArchive? zipArchive = null;
+    string _zipFilePath = "";
+    static readonly object zipLock = new();
+
+    private ZipArchiveEntry? getZipArchiveEntry(string zipFilePath, string filePath)
+    {
+        lock (zipLock)
+        {
+            if (string.IsNullOrEmpty(zipFilePath) || string.IsNullOrEmpty(filePath))
+            {
+                return null;
+            }
+
+            if (_zipFilePath != zipFilePath || zipFileStream is null || zipArchive is null)
+            {
+                fileDispose();
+                _zipFilePath = zipFilePath;
+
+                zipFileStream = new FileStream(zipFilePath, FileMode.Open);
+                zipArchive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
+            }
+
+            filePath = filePath.Replace("\\", "/");
+            var entry = zipArchive.GetEntry(filePath);
+
+            return entry;
+        }
     }
 
     private Stream getZipFileStream(string zipFilePath, string filePath)
     {
-        using FileStream fs = new FileStream(zipFilePath, FileMode.Create);
-        using ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Read);
 
-        var entry = archive.GetEntry(filePath);
+        var entry = getZipArchiveEntry(zipFilePath, filePath);
         if (entry != null)
         {
             return entry.Open();
@@ -149,19 +181,19 @@ public class FileKey
 
     private FileKeyInfo getZipFileInfo(string zipFilePath, string filePath)
     {
-        using FileStream fs = new FileStream(zipFilePath, FileMode.Create);
-        using ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Read);
-
-        var entry = archive.GetEntry(filePath);
+        var entry = getZipArchiveEntry(zipFilePath, filePath);
         if (entry != null)
         {
             return new FileKeyInfo()
             {
                 Path = filePath,
                 Name = entry.Name,
+                FullName = entry.FullName,
+                ZipFilePath = zipFilePath,
                 Length = entry.Length,
                 Time = entry.LastWriteTime.DateTime,
-                Exists = true
+                Exists = true,
+                ZipFile = true
             };
         }
         else
@@ -193,7 +225,7 @@ public class FileKey
         var fileCache = new string[6];
         if (AppStatus.IsCache)
         {
-            fileCache = GetCacheHash(fileInfo.FullName);
+            fileCache = GetCacheHash(key.FullName);
             if (fileCache.Length != 6 || fileCache[0] != key.Length.ToString() || fileCache[1] != key.Time.ToString("yyyy-MM-dd HH:mm:ss"))
             {
                 fileCache = new string[6];
@@ -202,24 +234,41 @@ public class FileKey
 
         try
         {
-            //type
-            var taskType = GetFileType(filePath, fileCache[2], cancellationToken);
+            if (key.ZipFile)
+            {
+                //type
+                key.TypeName = await GetFileType(filePath, fileCache[2], cancellationToken);
 
-            //CRC
-            var taskCrc = GetFileCRC(filePath, fileCache[3], cancellationToken);
+                //CRC
+                key.Crc32Hash = await GetFileCRC(filePath, fileCache[3], cancellationToken);
 
-            //md5
-            var taskMd5 = GetFileMD5(filePath, fileCache[4], cancellationToken);
+                //md5
+                key.Md5Hash = await GetFileMD5(filePath, fileCache[4], cancellationToken);
 
-            //sha
-            var taskSha256 = GetFileSha256(filePath, fileCache[5], cancellationToken);
+                //sha
+                key.Sha256Hash = await GetFileSha256(filePath, fileCache[5], cancellationToken);
+            }
+            else
+            {
+                //type
+                var taskType = GetFileType(filePath, fileCache[2], cancellationToken);
 
-            await Task.WhenAll(taskType, taskCrc, taskMd5, taskSha256);
+                //CRC
+                var taskCrc = GetFileCRC(filePath, fileCache[3], cancellationToken);
 
-            key.TypeName = await taskType;
-            key.Crc32Hash = await taskCrc;
-            key.Md5Hash = await taskMd5;
-            key.Sha256Hash = await taskSha256;
+                //md5
+                var taskMd5 = GetFileMD5(filePath, fileCache[4], cancellationToken);
+
+                //sha
+                var taskSha256 = GetFileSha256(filePath, fileCache[5], cancellationToken);
+
+                await Task.WhenAll(taskType, taskCrc, taskMd5, taskSha256);
+
+                key.TypeName = taskType.Result;
+                key.Crc32Hash = taskCrc.Result;
+                key.Md5Hash = taskMd5.Result;
+                key.Sha256Hash = taskSha256.Result;
+            }
 
         }
         catch (Exception ex)
@@ -230,15 +279,16 @@ public class FileKey
 
         if (AppStatus.IsCache)
         {
-            SetCacheHash(fileInfo.FullName, fileCache,
-                key.Length.ToString(), 
-                key.Time.ToString("yyyy-MM-dd HH:mm:ss"), 
+            SetCacheHash(key.FullName, fileCache,
+                key.Length.ToString(),
+                key.Time.ToString("yyyy-MM-dd HH:mm:ss"),
                 key.TypeName,
                 key.Crc32Hash.ToString(),
                 key.Md5Hash,
                 key.Sha256Hash);
         }
 
+        fileDispose();
         return key;
     }
 
@@ -250,7 +300,7 @@ public class FileKey
 
     private void SetCacheHash(string fileFullPath, string[] fileCache, params string[] fileKeyInfos)
     {
-        if (fileCache.SequenceEqual(fileKeyInfos)) return; 
+        if (fileCache.SequenceEqual(fileKeyInfos)) return;
 
         var cacheHashFilePath = GetCacheFilePath(fileFullPath);
         ConfigFile.SaveConfigFile(cacheHashFilePath, fileKeyInfos);
@@ -278,7 +328,8 @@ public class FileKey
 
     }
 
-    private string GetStringSha256(string info) {
+    private string GetStringSha256(string info)
+    {
         var bytes = Encoding.UTF8.GetBytes(info);
         using var sha256 = SHA256.Create();
         return BitConverter.ToString(sha256.ComputeHash(bytes));
@@ -330,8 +381,7 @@ public class FileKey
 
     }
 
-    public async Task<string> GetFileType(string filePath, string cache, CancellationToken cancellationToken = default)
-    public async Task<string> GetFileType(string filePath, CancellationToken cancellationToken = default, bool ifGetTypeName = true)
+    public async Task<string> GetFileType(string filePath, string cache = "", CancellationToken cancellationToken = default, bool ifGetTypeName = true)
     {
         //if (!string.IsNullOrEmpty(cache)) return cache;
         if (!outTypeOption) return string.Empty;
@@ -380,4 +430,20 @@ public class FileKey
         return resultFilePaths;
     }
 
+    public void Dispose()
+    {
+        fileDispose();
+    }
+
+    private void fileDispose()
+    {
+        if (zipFileStream is not null)
+        {
+            zipFileStream.Dispose();
+        }
+        if (zipArchive is not null)
+        {
+            zipArchive.Dispose();
+        }
+    }
 }

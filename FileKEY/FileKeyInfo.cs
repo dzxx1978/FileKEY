@@ -8,6 +8,11 @@ public class FileKeyInfo
     public bool Exists { get; set; } = true;
 
     /// <summary>
+    /// 是否是压缩文件
+    /// </summary>
+    public bool ZipFile { get; set; } = true;
+
+    /// <summary>
     /// 错误信息
     /// </summary>
     public string ErrMessage { get; set; } = "";
@@ -21,6 +26,16 @@ public class FileKeyInfo
     /// 文件名
     /// </summary>
     public string Name { get; set; } = "";
+
+    /// <summary>
+    /// 文件名(含路径)
+    /// </summary>
+    public string FullName { get; set; } = "";
+
+    /// <summary>
+    /// zip文件（含路径）
+    /// </summary>
+    public string ZipFilePath { get; set; } = "";
 
     /// <summary>
     /// 文件类型

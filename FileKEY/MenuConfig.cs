@@ -1,6 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using static FileKEY.ConfigFile;
+﻿using static FileKEY.ConfigFile;
 using static FileKEY.Language;
 
 namespace FileKEY;
@@ -13,13 +11,13 @@ public class MenuConfig
     /// 显示配置项主菜单
     /// </summary>
     /// <param name="args"></param>
-    public void ShowMenu(string[]? args = null)
+    public Desktop ShowMenu(string[]? args = null)
     {
         if (args is not null && args.Length > 0)
         {
             AppStatus.SetOptions(args);
             if (AppStatus.IsHideMenu || AppStatus.IsHelpShownAndExit)
-                return;
+                return new();
         }
         else
         {
@@ -81,7 +79,7 @@ public class MenuConfig
             }
         } while (menuSelected < menuOptions.Count() - 1);
 
-        AppStatus.SetOptions(options.ToArray());
+        return AppStatus.SetOptions(options.ToArray());
 
     }
 
@@ -317,7 +315,8 @@ public class MenuConfig
     /// <summary>
     /// 显示状态设置配置菜单
     /// </summary>
-    private void showMenuStatusFileOptions() {
+    private void showMenuStatusFileOptions()
+    {
 
         var menuSelected = 0;
         var menuOptions = Array.Empty<string>();
@@ -550,7 +549,8 @@ public class MenuConfig
     /// 读取并显示配置文件
     /// </summary>
     /// <param name="configFilePath">配置文件路径和文件名</param>
-    private void displayConfigFile(string configFilePath) {
+    private void displayConfigFile(string configFilePath)
+    {
         var config = LoadConfigFile(configFilePath).ToList();
         Message.WriteLine(GetConfigString(config));
         Message.Wait(GetMessage(MessageEnum.DisplayCompletedPressEnterToContinue), ConsoleKey.Enter);
@@ -816,13 +816,15 @@ public class MenuConfig
     /// </summary>
     private void readConsolePathOptions()
     {
-        var fileOrDirectoryPath = Message.ReadPath(GetMessage(MessageEnum.PleaseEnterTheFilePath), string.Empty);
+        var readFileOrDirectoryPath = Message.ReadPath(GetMessage(MessageEnum.PleaseEnterTheFilePath), string.Empty);
 
         optionsRemove(AppStatus.Command_ShowMenu);
         optionsRemove(AppStatus.Command_File, 2);
         optionsRemove(AppStatus.Command_Directory, 2);
 
-        if (string.IsNullOrEmpty(fileOrDirectoryPath)) return;
+        if (string.IsNullOrEmpty(readFileOrDirectoryPath)) return;
+
+        var fileOrDirectoryPath = readFileOrDirectoryPath.Split('>')[0];
 
         if (File.Exists(fileOrDirectoryPath))
         {
@@ -837,7 +839,8 @@ public class MenuConfig
             Message.WarningLine(GetMessage(MessageEnum.TheInputFilePathDoesNotExist, fileOrDirectoryPath));
             return;
         }
-        options.Add(fileOrDirectoryPath);
+
+        options.Add(readFileOrDirectoryPath);
         options.Add(AppStatus.Command_ShowMenu);
 
     }

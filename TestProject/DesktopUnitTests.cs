@@ -34,8 +34,8 @@ namespace TestProject
             var output = string.Empty;
             try
             {
-                AppStatus.SetOptions(args);
-                await new Desktop().GanHuoer();
+                using var desktop = AppStatus.SetOptions(args);
+                await desktop.GanHuoer();
             }
             catch (Exception ex)
             {
@@ -87,13 +87,13 @@ namespace TestProject
                 AppStatus.CommandValue_True,
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
-            var fileKey = new FileKey(false, false, false, true);
+            using var fileKey = new FileKey(false, false, false, true);
             var dogInfo = fileKey.GetCacheHash(Path.GetFullPath(imageDogPath));
 
             Assert.True(dogInfo is not null);
@@ -122,7 +122,7 @@ namespace TestProject
                 AppStatus.Command_Language,
                 "test"
             };
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
             Assert.Equal("*Test end*", Language.GetMessage(Language.MessageEnum.End));
             Assert.False(string.IsNullOrEmpty(Language.GetMessage(Language.MessageEnum.Set)));
@@ -142,9 +142,9 @@ namespace TestProject
                 AppStatus.Command_t
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -167,9 +167,9 @@ namespace TestProject
                 AppStatus.Command_c
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -192,9 +192,9 @@ namespace TestProject
                 AppStatus.Command_m
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -217,9 +217,9 @@ namespace TestProject
                 AppStatus.Command_s
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -242,9 +242,9 @@ namespace TestProject
                 "-0s"
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -267,9 +267,9 @@ namespace TestProject
                 "-0cms"
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -291,9 +291,9 @@ namespace TestProject
                 imageCatPath
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -316,9 +316,9 @@ namespace TestProject
                 imageCatFileSha256Key
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -339,9 +339,9 @@ namespace TestProject
                 "-0s"
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString().Trim();
 
@@ -360,9 +360,9 @@ namespace TestProject
                 "-0s"
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString().Trim();
 
@@ -381,9 +381,9 @@ namespace TestProject
                 testFileDir
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -409,9 +409,9 @@ namespace TestProject
                 "-0s"
            };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -434,9 +434,9 @@ namespace TestProject
                 "-0s"
            };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -460,11 +460,11 @@ namespace TestProject
                 "-0s"
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
             var outOptions = AppStatus.GetOptions();
             Assert.True(outOptions.Count() == 6);
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -488,11 +488,11 @@ namespace TestProject
                 "-0s"
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
             var outOptions = AppStatus.GetOptions();
             Assert.True(outOptions.Count() == 6);
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 
@@ -521,11 +521,11 @@ namespace TestProject
                 "3"
             };
 
-            AppStatus.SetOptions(args.ToArray());
+            using var desktop = AppStatus.SetOptions(args.ToArray());
             var outOptions = AppStatus.GetOptions();
             Assert.True(outOptions.Count() == 9);
 
-            await new Desktop().GanHuoer();
+            await desktop.GanHuoer();
 
             var output = writer.ToString();
 

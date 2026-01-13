@@ -3,10 +3,12 @@
 try
 {
     var options = args;
+    var menuConfig = new MenuConfig();
+
     do
     {
-        new MenuConfig().ShowMenu(options);
-        await new Desktop().GanHuoer();
+        using var desktop = menuConfig.ShowMenu(options);
+        await desktop.GanHuoer();
         options = Array.Empty<string>();
     } while (!AppStatus.IsHideMenu);
 }
