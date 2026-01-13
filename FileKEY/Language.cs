@@ -110,6 +110,7 @@ public static class Language
         Type,
         Edit,
         Add,
+        Clear,
     }
 
     private static void Initialize_en()

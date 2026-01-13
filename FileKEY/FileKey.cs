@@ -1,6 +1,4 @@
-﻿using System.IO;
-using System.IO.Compression;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace FileKEY;
@@ -192,31 +190,36 @@ public class FileKey
     {
         var key = getFileInfo(filePath);
 
+        var fileCache = new string[6];
         if (AppStatus.IsCache)
         {
-            // TODO cache
+            fileCache = GetCacheHash(fileInfo.FullName);
+            if (fileCache.Length != 6 || fileCache[0] != key.Length.ToString() || fileCache[1] != key.Time.ToString("yyyy-MM-dd HH:mm:ss"))
+            {
+                fileCache = new string[6];
+            }
         }
 
         try
         {
             //type
-            var taskType = GetFileType(filePath, cancellationToken);
+            var taskType = GetFileType(filePath, fileCache[2], cancellationToken);
 
             //CRC
-            var taskCrc = GetFileCRC(filePath, cancellationToken);
+            var taskCrc = GetFileCRC(filePath, fileCache[3], cancellationToken);
 
             //md5
-            var taskMd5 = GetFileMD5(filePath, cancellationToken);
+            var taskMd5 = GetFileMD5(filePath, fileCache[4], cancellationToken);
 
             //sha
-            var taskSha256 = GetFileSha256(filePath, cancellationToken);
+            var taskSha256 = GetFileSha256(filePath, fileCache[5], cancellationToken);
 
             await Task.WhenAll(taskType, taskCrc, taskMd5, taskSha256);
 
-            key.TypeName = taskType.Result;
-            key.Crc32Hash = taskCrc.Result;
-            key.Md5Hash = taskMd5.Result;
-            key.Sha256Hash = taskSha256.Result;
+            key.TypeName = await taskType;
+            key.Crc32Hash = await taskCrc;
+            key.Md5Hash = await taskMd5;
+            key.Sha256Hash = await taskSha256;
 
         }
         catch (Exception ex)
@@ -225,11 +228,65 @@ public class FileKey
             key.Exists = false;
         }
 
+        if (AppStatus.IsCache)
+        {
+            SetCacheHash(fileInfo.FullName, fileCache,
+                key.Length.ToString(), 
+                key.Time.ToString("yyyy-MM-dd HH:mm:ss"), 
+                key.TypeName,
+                key.Crc32Hash.ToString(),
+                key.Md5Hash,
+                key.Sha256Hash);
+        }
+
         return key;
     }
 
-    public async Task<string> GetFileMD5(string filePath, CancellationToken cancellationToken = default)
+    public string[] GetCacheHash(string fileFullPath)
     {
+        var cacheHashFilePath = GetCacheFilePath(fileFullPath);
+        return ConfigFile.LoadConfigFile(cacheHashFilePath);
+    }
+
+    private void SetCacheHash(string fileFullPath, string[] fileCache, params string[] fileKeyInfos)
+    {
+        if (fileCache.SequenceEqual(fileKeyInfos)) return; 
+
+        var cacheHashFilePath = GetCacheFilePath(fileFullPath);
+        ConfigFile.SaveConfigFile(cacheHashFilePath, fileKeyInfos);
+    }
+
+    /// <summary>
+    /// 获取缓存文件根目录
+    /// </summary>
+    /// <param name="infoHash"></param>
+    /// <returns></returns>
+    public string GetCacheFilePath(string fileFullPath)
+    {
+        var infoHash = GetStringSha256(fileFullPath);
+        var infoHashSub = infoHash.ToArray().Sum(p => p) % 1000;
+
+        var dateRootPath = ConfigFile.GetConfigRootPath(ConfigFile.ConfigTypeEnum.Data.ToString());
+        var cacheHashFilePath = Path.Combine(dateRootPath, infoHashSub.ToString("000"));
+        if (!Directory.Exists(cacheHashFilePath))
+        {
+            Directory.CreateDirectory(cacheHashFilePath);
+        }
+        cacheHashFilePath = Path.Combine(cacheHashFilePath, infoHash);
+
+        return cacheHashFilePath;
+
+    }
+
+    private string GetStringSha256(string info) {
+        var bytes = Encoding.UTF8.GetBytes(info);
+        using var sha256 = SHA256.Create();
+        return BitConverter.ToString(sha256.ComputeHash(bytes));
+    }
+
+    public async Task<string> GetFileMD5(string filePath, string cache, CancellationToken cancellationToken = default)
+    {
+        if (!string.IsNullOrEmpty(cache)) return cache;
         if (!outMd5Option) return string.Empty;
 
         using var fileStream = getFileStream(filePath);
@@ -237,8 +294,9 @@ public class FileKey
         return BitConverter.ToString(await md5.ComputeHashAsync(fileStream, cancellationToken));
     }
 
-    public async Task<string> GetFileSha256(string filePath, CancellationToken cancellationToken = default)
+    public async Task<string> GetFileSha256(string filePath, string cache, CancellationToken cancellationToken = default)
     {
+        if (!string.IsNullOrEmpty(cache)) return cache;
         if (!outSha256Option) return string.Empty;
 
         using var fileStream = getFileStream(filePath);
@@ -246,11 +304,12 @@ public class FileKey
         return BitConverter.ToString(await sha256.ComputeHashAsync(fileStream, cancellationToken));
     }
 
-    public async Task<uint> GetFileCRC(string filePath, CancellationToken cancellationToken = default)
+    public async Task<uint> GetFileCRC(string filePath, string cache, CancellationToken cancellationToken = default)
     {
+        if (!string.IsNullOrEmpty(cache) && uint.TryParse(cache, out uint crc)) return crc;
         if (!outCrcOption) return 0;
 
-        uint crc = 0xFFFFFFFF;
+        crc = 0xFFFFFFFF;
         var buffer = new byte[8192];
 
         using var fileStream = getFileStream(filePath);
@@ -271,8 +330,10 @@ public class FileKey
 
     }
 
+    public async Task<string> GetFileType(string filePath, string cache, CancellationToken cancellationToken = default)
     public async Task<string> GetFileType(string filePath, CancellationToken cancellationToken = default, bool ifGetTypeName = true)
     {
+        //if (!string.IsNullOrEmpty(cache)) return cache;
         if (!outTypeOption) return string.Empty;
 
         var buffer = new byte[16];
@@ -301,6 +362,22 @@ public class FileKey
 
         return fileType.ToString();
 
+    }
+
+    public static List<string> GetSubDirectoryFiles(string directoryPath, int subCount)
+    {
+        var resultFilePaths = new List<string>();
+        resultFilePaths.AddRange(Directory.GetFiles(directoryPath));
+        if (subCount > 0)
+        {
+            subCount--;
+            var subDirectories = Directory.GetDirectories(directoryPath);
+            foreach (var subDirectory in subDirectories)
+            {
+                resultFilePaths.AddRange(GetSubDirectoryFiles(subDirectory, subCount));
+            }
+        }
+        return resultFilePaths;
     }
 
 }
